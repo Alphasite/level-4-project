@@ -49,4 +49,21 @@ class Line(val lineNumber: Int, val line: String) {
             this.instruction = instructionFactory.getInstanceIfIsMatch(instructionSegments)
         }
     }
+
+    override fun toString(): String {
+        val line = StringBuilder()
+
+        line.append(this.line)
+        line.append(": ")
+
+        if (this.label != null) {
+            line.append(this.label).append(" ")
+        }
+
+        if (this.instruction != null) {
+            line.append(this.instruction).append(" ")
+        }
+
+        return line.toString()
+    }
 }

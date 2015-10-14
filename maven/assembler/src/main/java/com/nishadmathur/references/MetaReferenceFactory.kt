@@ -13,15 +13,17 @@ import javax.inject.Singleton
  * Time: 05:57
  */
 @Module
-class MetaReferenceFactory<T : Reference, U : ReferenceFactory<T>> : ReferenceFactory<T> {
+class MetaReferenceFactory: ReferenceFactory {
 
     override val type: String
         get() = throw UnsupportedOperationException()
 
-    internal var referenceFactories: TreeSet<Pair<Int, U>>
+    internal var referenceFactories: TreeSet<Pair<Int, ReferenceFactory>>
+    internal var referenceFactoriesMapping: MutableMap<String, ReferenceFactory>
 
     init {
-        this.referenceFactories = TreeSet<Pair<Int, U>>(comparator { a, b -> a.first.compareTo(b.first) })
+        this.referenceFactories = TreeSet<Pair<Int, ReferenceFactory>>(comparator { a, b -> a.first.compareTo(b.first) })
+        this.referenceFactoriesMapping = HashMap()
     }
 
     override fun checkIsMatch(reference: String): Boolean {
@@ -30,7 +32,7 @@ class MetaReferenceFactory<T : Reference, U : ReferenceFactory<T>> : ReferenceFa
             .any { it.checkIsMatch(reference) }
     }
 
-    override fun getInstanceIfIsMatch(reference: String): T {
+    override fun getInstanceIfIsMatch(reference: String): Reference {
         try {
             return referenceFactories.descendingIterator().asSequence()
                 .map { it.second }
@@ -41,11 +43,16 @@ class MetaReferenceFactory<T : Reference, U : ReferenceFactory<T>> : ReferenceFa
         }
     }
 
-    fun addReference(referenceFactory: U, priority: Int) {
+    fun addReference(referenceFactory: ReferenceFactory, priority: Int) {
         this.referenceFactories.add(Pair(priority, referenceFactory))
+        this.referenceFactoriesMapping[referenceFactory.type] = referenceFactory
     }
 
-    @Provides @Singleton private fun provideMetaReferenceFactor(): MetaReferenceFactory<Reference, ReferenceFactory<Reference>> {
+    operator fun get(factoryName: String): ReferenceFactory? {
+        return referenceFactoriesMapping[factoryName]
+    }
+
+    @Provides @Singleton private fun provideMetaReferenceFactor(): MetaReferenceFactory {
         return MetaReferenceFactory()
     }
 }

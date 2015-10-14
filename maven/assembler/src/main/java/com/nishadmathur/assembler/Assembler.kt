@@ -34,7 +34,7 @@ class Assembler(var instructionFactory: MetaInstructionFactory) {
                 stringLines.add(it.nextLine())
             }
 
-            for (i in 0..stringLines.size()) {
+            for (i in 0 until stringLines.size()) {
                 if (stringLines[i].length() > 0) {
                     lines.add(Line(i, stringLines[i]))
                 }
@@ -50,9 +50,19 @@ class Assembler(var instructionFactory: MetaInstructionFactory) {
         var instructionBytes = this.lines map { it.instruction?.raw } filter { (it?.size() ?: 0) > 0 }
         var labels = this.lines map { it.label } filter { it != null }
 
-        print(lines)
-        print(instructionBytes)
-        print(labels)
+        println("Instructions:")
+        lines.forEach { println(it) }
+        println()
+        
+        println("Raw Bytes:")
+        instructionBytes.forEach { println(Arrays.toString(it)) }
+        println()
+
+        println("Labels:")
+        println(labels)
+        println()
+
+        return ByteArray(0) // TODO do!
     }
 
     fun calculateOffsets(lines: List<Line>): List<Line> {

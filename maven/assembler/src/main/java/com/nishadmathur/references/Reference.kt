@@ -8,4 +8,6 @@ package com.nishadmathur.references
 interface Reference {
     val raw: ByteArray
     val size: Int
+
+    override fun toString(): String
 }

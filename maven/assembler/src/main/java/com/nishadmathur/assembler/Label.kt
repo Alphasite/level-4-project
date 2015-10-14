@@ -26,4 +26,8 @@ class Label(val identifier: String, val IdentifierTable: IdentifierTable) {
     init {
         this.IdentifierTable.table.put(identifier, IdentifierTable.nextIdentifier++)
     }
+
+    override fun toString(): String {
+        return "$identifier[$IdentifierTable]:"
+    }
 }

@@ -1,5 +1,6 @@
 package com.nishadmathur.instructions
 
+import com.nishadmathur.assembler.join
 import com.nishadmathur.references.Reference
 import java.util.*
 
@@ -14,7 +15,7 @@ class TypedInstruction(override val arguments: List<Reference>,
 
     override val raw: ByteArray
         get() {
-            val rawArguments = arguments.map { argument -> argument.raw }
+            val rawArguments = join(arguments.map { argument -> argument.raw })
             val destinationArray = ByteArray(this.rawLiteral.size() + rawArguments.size())
 
             System.arraycopy(this.rawLiteral, 0, destinationArray, 0, this.rawLiteral.size())

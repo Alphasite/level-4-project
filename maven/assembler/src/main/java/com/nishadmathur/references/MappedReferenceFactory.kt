@@ -7,7 +7,7 @@ import com.nishadmathur.errors.DataSourceParseError
  * Date: 04/10/2015
  * Time: 21:02
  */
-class MappedReferenceFactory(override val type: String, val mappings: Map<String, ByteArray>): ReferenceFactory<LiteralReference> {
+class MappedReferenceFactory(override val type: String, val mappings: Map<String, ByteArray>): ReferenceFactory {
     override fun checkIsMatch(reference: String): Boolean {
         return mappings.containsKey(reference)
     }

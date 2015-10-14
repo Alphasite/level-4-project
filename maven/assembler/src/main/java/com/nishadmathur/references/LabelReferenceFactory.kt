@@ -10,9 +10,9 @@ import kotlin.text.Regex
  * Time: 21:01
  */
 class LabelReferenceFactory(override val type: String,
-                            val factory: ReferenceFactory<Reference>,
+                            val factory: ReferenceFactory,
                             labelRegex: Regex,
-                            labelExtractionRegex: Regex) : ReferenceFactory<LabelReference> {
+                            labelExtractionRegex: Regex) : ReferenceFactory {
 
     private val memoryRegex = labelRegex
     private val memoryExtractionRegex = labelExtractionRegex

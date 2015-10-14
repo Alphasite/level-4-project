@@ -68,11 +68,11 @@ public enum DataSource {
         }
         
         if source.lowercaseString.isMatch("^r\\d+$") {
-            guard let number = UInt(source[1...source.length]) else {
+            guard let registerNumber = UInt(source[1...source.length]) else {
                 throw AssemblerError.DataSourceParseError(error: "Error extracting register number from \(source)")
             }
             
-            return DataSource.register(number)
+            return DataSource.register(registerNumber)
         }
         
         if source.isMatch("^\\d+$") {

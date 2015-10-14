@@ -1,14 +1,16 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.errors.DataSourceParseError
+import kotlin.text.Regex
 
 /**
  * User: nishad
  * Date: 04/10/2015
  * Time: 20:59
  */
-class IndexedReferenceFactory(override val type: String, val factory: ReferenceFactory<Reference>): ReferenceFactory<IndexedReference> {
-    private val memoryRegex = "(\\d+|r\\d+|#\\w+)\\[(\\d+|r\\d+)\\]".toRegex()
+class IndexedReferenceFactory(override val type: String,
+                              val memoryRegex: Regex,
+                              val factory: ReferenceFactory): ReferenceFactory {
 
     override fun checkIsMatch(reference: String): Boolean {
         if (reference.matches(memoryRegex)) {

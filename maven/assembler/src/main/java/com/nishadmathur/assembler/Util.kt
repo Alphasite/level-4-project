@@ -31,6 +31,30 @@ fun join(vararg byteArrays: ByteArray): ByteArray {
     return outputArray
 }
 
+fun join(byteArrays: Collection<ByteArray>): ByteArray {
+    val size = byteArrays map { it.size() } sumBy { it }
+
+    var offset = 0
+    var outputArray = ByteArray(size)
+    for (byteArray in byteArrays) {
+        System.arraycopy(byteArray, 0, outputArray, offset, byteArray.size())
+        offset += byteArray.size()
+    }
+
+    return outputArray
+}
+
+fun Sequence<Byte>.toByteArray(): ByteArray {
+    val list = this.toArrayList()
+    val byteArray = ByteArray(list.size())
+
+    for (i in 0 until list.size()) {
+        byteArray[i] = list[i]
+    }
+
+    return byteArray
+}
+
 fun <T> Iterable<T>.enumerate(): Iterable<Pair<Int, T>> {
     return (0..Int.MAX_VALUE).zip(this)
 }

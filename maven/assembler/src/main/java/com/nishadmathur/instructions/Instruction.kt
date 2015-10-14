@@ -1,6 +1,7 @@
 package com.nishadmathur.instructions
 
 import com.nishadmathur.references.Reference
+import java.util.*
 
 /**
  * User: nishad
@@ -11,4 +12,8 @@ interface Instruction {
     val raw: ByteArray
     val size: Int
     val arguments: List<Reference>
+
+    override fun toString(): String {
+        return "${Arrays.toString(raw)} Args@{${arguments.joinToString(", ")}}"
+    }
 }
