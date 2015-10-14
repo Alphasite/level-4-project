@@ -53,7 +53,7 @@ class Assembler(var instructionFactory: MetaInstructionFactory) {
         println("Instructions:")
         lines.forEach { println(it) }
         println()
-        
+
         println("Raw Bytes:")
         instructionBytes.forEach { println(Arrays.toString(it)) }
         println()
