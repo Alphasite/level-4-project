@@ -9,9 +9,17 @@ import kotlin.text.Regex
  * Date: 04/10/2015
  * Time: 20:59
  */
-class IndexedReferenceFactory(override val type: String,
-                              val memoryRegex: Regex,
-                              val factory: ReferenceFactory): ReferenceFactory, Serializable {
+class IndexedReferenceFactory: ReferenceFactory, Serializable {
+
+    lateinit override var type: String
+    lateinit var memoryRegex: Regex
+    lateinit var factory: ReferenceFactory
+
+    constructor(type: String, memoryRegex: Regex, factory: ReferenceFactory) {
+        this.type = type
+        this.memoryRegex = memoryRegex
+        this.factory = factory
+    }
 
     override fun checkIsMatch(reference: String): Boolean {
         if (reference.matches(memoryRegex)) {

@@ -9,8 +9,16 @@ import java.io.Serializable
  * Date: 13/10/2015
  * Time: 15:37
  */
-class TypePolymorphicInstructionFactory(override val identifier: String,
-                                        val factories: Collection<InstructionFactory<Instruction>>) : InstructionFactory<Instruction>, Serializable {
+class TypePolymorphicInstructionFactory: InstructionFactory<Instruction>, Serializable {
+
+    lateinit override var identifier: String
+    lateinit var factories: Collection<InstructionFactory<Instruction>>
+
+    constructor(identifier: String, factories: Collection<InstructionFactory<Instruction>>) {
+        this.identifier = identifier
+        this.factories = factories
+    }
+
     override val help: String
         get() = throw UnsupportedOperationException()
 

@@ -10,11 +10,25 @@ import kotlin.text.Regex
  * Date: 04/10/2015
  * Time: 21:01
  */
-class LiteralReferenceFactory(override val type: String,
-                              val literalType: LiteralType,
-                              val literalSize: Int,
-                              val literalRegex: Regex,
-                              val literalExtractionRegex: Regex) : ReferenceFactory, Serializable {
+class LiteralReferenceFactory : ReferenceFactory, Serializable {
+    var literalSize: Int = 0
+
+    lateinit override var type: String
+    lateinit var literalType: LiteralType
+    lateinit var literalRegex: Regex
+    lateinit var literalExtractionRegex: Regex
+
+    constructor(type: String,
+                literalType: LiteralType,
+                literalSize: Int,
+                literalRegex: Regex,
+                literalExtractionRegex: Regex) {
+        this.type = type
+        this.literalType = literalType
+        this.literalSize = literalSize
+        this.literalRegex = literalRegex
+        this.literalExtractionRegex = literalExtractionRegex
+    }
 
     override fun checkIsMatch(reference: String): Boolean = literalRegex.matches(reference)
 

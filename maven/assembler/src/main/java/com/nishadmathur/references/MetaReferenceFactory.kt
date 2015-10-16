@@ -9,7 +9,13 @@ import java.util.*
  * Date: 05/10/2015
  * Time: 05:57
  */
-class MetaReferenceFactory(override val type: String): ReferenceFactory, Serializable {
+class MetaReferenceFactory: ReferenceFactory, Serializable {
+
+    lateinit override var type: String
+
+    constructor(type: String) {
+        this.type = type
+    }
 
     internal var referenceFactories: TreeSet<Pair<Int, ReferenceFactory>>
     internal var referenceFactoriesMapping: MutableMap<String, ReferenceFactory>

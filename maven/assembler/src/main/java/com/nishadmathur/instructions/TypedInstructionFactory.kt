@@ -12,9 +12,17 @@ import java.io.Serializable
  * Date: 13/10/2015
  * Time: 15:51
  */
-class TypedInstructionFactory(override val identifier: String,
-                              val arguments: List<Pair<String, ReferenceFactory>>,
-                              val rawLiteral: SizedByteArray): InstructionFactory<Instruction>, Serializable {
+class TypedInstructionFactory: InstructionFactory<Instruction>, Serializable {
+
+    lateinit override var identifier: String
+    lateinit var arguments: List<Pair<String, ReferenceFactory>>
+    lateinit var rawLiteral: SizedByteArray
+
+    constructor(identifier: String, arguments: List<Pair<String, ReferenceFactory>>, rawLiteral: SizedByteArray) {
+        this.identifier = identifier
+        this.arguments = arguments
+        this.rawLiteral = rawLiteral
+    }
 
     override val help: String
         get() = identifier + " " + arguments.map { argument -> "<${argument.first}:${argument.second.type}>"}.join(" ")

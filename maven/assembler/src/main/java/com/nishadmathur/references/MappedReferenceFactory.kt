@@ -9,7 +9,15 @@ import java.io.Serializable
  * Date: 04/10/2015
  * Time: 21:02
  */
-class MappedReferenceFactory(override val type: String, val mappings: Map<String, SizedByteArray>): ReferenceFactory, Serializable {
+class MappedReferenceFactory: ReferenceFactory, Serializable {
+    lateinit override var type: String
+    lateinit var mappings: Map<String, SizedByteArray>
+
+    constructor(type: String, mappings: Map<String, SizedByteArray>) {
+        this.type = type
+        this.mappings = mappings
+    }
+
     override fun checkIsMatch(reference: String): Boolean {
         return mappings.containsKey(reference)
     }

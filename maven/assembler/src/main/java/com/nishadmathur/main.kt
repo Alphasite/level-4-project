@@ -19,7 +19,7 @@ import java.util.*
 class Main {
     val referenceFactory = MetaReferenceFactory("All")
     val instructionFactory = MetaInstructionFactory()
-    val identiferTable = IdentifierTable()
+    val identifierTable = IdentifierTable()
 
     init {
         referenceFactory.addReference(
@@ -47,7 +47,7 @@ class Main {
         )
 
         referenceFactory.addReference(
-            LabelReferenceFactory("label", referenceFactory, identiferTable, 8, "^#\\w+$".toRegex(), "(?<=#)\\w+".toRegex()),
+            LabelReferenceFactory(8, "label", identifierTable, "^#\\w+$".toRegex(), "(?<=#)\\w+".toRegex()),
             3
         )
 
@@ -80,6 +80,6 @@ class Main {
 fun main(args: Array<String>) {
     val main = Main()
 
-    Assembler(instructionFactory = main.instructionFactory, identifierTable = main.identiferTable).assemble("test.asm")
+    Assembler(instructionFactory = main.instructionFactory, identifierTable = main.identifierTable).assemble("test.asm")
 }
 
