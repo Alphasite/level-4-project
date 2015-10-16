@@ -2,13 +2,14 @@ package com.nishadmathur.instructions
 
 import com.nishadmathur.errors.InstructionParseError
 import sun.tools.jstat.Identifier
+import java.io.Serializable
 
 /**
  * User: nishad
  * Date: 12/10/2015
  * Time: 12:24
  */
-class MetaInstructionFactory: InstructionFactory<Instruction> {
+class MetaInstructionFactory: InstructionFactory<Instruction>, Serializable {
     override val identifier: String
         get() = throw UnsupportedOperationException()
 

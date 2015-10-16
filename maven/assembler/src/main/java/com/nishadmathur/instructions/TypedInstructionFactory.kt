@@ -1,5 +1,6 @@
 package com.nishadmathur.instructions
 
+import com.nishadmathur.configuration.SerializablePair
 import com.nishadmathur.errors.IncorrectTypeError
 import com.nishadmathur.errors.InstructionParseError
 import com.nishadmathur.references.Reference
@@ -15,10 +16,10 @@ import java.io.Serializable
 class TypedInstructionFactory: InstructionFactory<Instruction>, Serializable {
 
     lateinit override var identifier: String
-    lateinit var arguments: List<Pair<String, ReferenceFactory>>
+    lateinit var arguments: List<SerializablePair<String, ReferenceFactory>>
     lateinit var rawLiteral: SizedByteArray
 
-    constructor(identifier: String, arguments: List<Pair<String, ReferenceFactory>>, rawLiteral: SizedByteArray) {
+    constructor(identifier: String, arguments: List<SerializablePair<String, ReferenceFactory>>, rawLiteral: SizedByteArray) {
         this.identifier = identifier
         this.arguments = arguments
         this.rawLiteral = rawLiteral

@@ -1,13 +1,20 @@
 package com.nishadmathur
 
+import com.esotericsoftware.yamlbeans.YamlReader
+import com.esotericsoftware.yamlbeans.YamlWriter
 import com.nishadmathur.assembler.Assembler
 import com.nishadmathur.assembler.IdentifierTable
 import com.nishadmathur.assembler.Label
+import com.nishadmathur.configuration.SerializablePair
+import com.nishadmathur.configuration.SerializableTriple
 import com.nishadmathur.instructions.MetaInstructionFactory
+import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
 import com.nishadmathur.instructions.TypedInstructionFactory
 import com.nishadmathur.references.*
 import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.toByteArray
+import java.io.FileReader
+import java.io.FileWriter
 import java.util.*
 
 /**
@@ -79,6 +86,22 @@ class Main {
 
 fun main(args: Array<String>) {
     val main = Main()
+
+    val reader = YamlReader(FileReader("test.yml"));
+    reader.config.setClassTag("instruction", TypedInstructionFactory::class.javaClass)
+    reader.config.setClassTag("instruction.polymorphic", TypePolymorphicInstructionFactory::class.javaClass)
+    reader.config.setClassTag("instruction.meta", MetaInstructionFactory::class.javaClass)
+
+    reader.config.setClassTag("reference.meta", MetaReferenceFactory::class.javaClass)
+    reader.config.setClassTag("reference.indexed", IndexedReferenceFactory::class.javaClass)
+    reader.config.setClassTag("reference.label", LabelReferenceFactory::class.javaClass)
+    reader.config.setClassTag("reference.literal", LiteralReferenceFactory::class.javaClass)
+    reader.config.setClassTag("reference.mapped", MappedReferenceFactory::class.javaClass)
+
+    reader.config.setClassTag("pair", SerializablePair::class.javaClass)
+    reader.config.setClassTag("tripe", SerializableTriple::class.javaClass)
+
+    reader.read()
 
     Assembler(instructionFactory = main.instructionFactory, identifierTable = main.identifierTable).assemble("test.asm")
 }

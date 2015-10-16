@@ -1,6 +1,7 @@
 package com.nishadmathur.util
 
 import java.io.ByteArrayOutputStream
+import java.io.Serializable
 import java.util.*
 
 /**
@@ -8,13 +9,21 @@ import java.util.*
  * Date: 15/10/2015
  * Time: 09:32
  */
-class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
+class SizedByteArray: Serializable {
+
+    lateinit var byteArray: ByteArray
+    lateinit var bitSize: Integer
+
+    constructor(byteArray: ByteArray, bitSize: Int) {
+        this.byteArray = byteArray
+        this.bitSize = Integer(bitSize)
+    }
 
     constructor(bytes: Collection<Byte>) : this(bytes.asSequence().toByteArray(), bytes.size() * 8)
 
     override fun toString(): String {
         val bytes = byteArray.withIndex()
-            .dropWhile { it.index < (byteArray.size() - Math.ceil(bitSize / 8.0).toInt()) }
+            .dropWhile { it.index < (byteArray.size() - Math.ceil(bitSize.intValue() / 8.0).toInt()) }
             .map { Integer.toBinaryString(it.value.toInt()).padStart(8, '0') }
             .join(", ")
 
@@ -23,7 +32,7 @@ class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
 
     companion object {
         fun join(byteArrays: List<SizedByteArray>): SizedByteArray {
-            var totalSize = byteArrays.map { it.bitSize } .sum()
+            var totalSize = byteArrays.map { it.bitSize.intValue() } .sum()
 
             val byteStream = ByteArrayOutputStream();
 
@@ -34,14 +43,14 @@ class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
 
             for (i in 0 until byteArrays.size()) {
                 val byteArray = byteArrays[i].byteArray
-                val bitSize = byteArrays[i].bitSize
+                val bitSize = byteArrays[i].bitSize.toInt()
                 val bytesToSkip = byteArray.size() - Math.ceil(bitSize / 8.0).toInt()
 
                 for (j in bytesToSkip until byteArray.size()) {
                     var (word, length) = currentByte(byteArray, bitSize, j, bytesToSkip)
 
                     if (byteArrays[i].bitSize < 8) {
-                        word = (word.toInt() shl (8 - byteArrays[i].bitSize)).toByte()
+                        word = (word.toInt() shl (8 - bitSize)).toByte()
                     }
 
                     byte = ((byte.toInt() shl (8 - currentByteBitsRead)) or (word.toInt() ushr currentByteBitsRead)).toByte()

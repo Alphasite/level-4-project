@@ -1,0 +1,10 @@
+argument formats:
+  -
+
+instructions:
+  - !instruction
+    identifier: load
+    arguments:
+      - !pair
+
+
