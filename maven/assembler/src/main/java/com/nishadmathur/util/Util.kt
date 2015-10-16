@@ -1,5 +1,6 @@
-package com.nishadmathur.assembler
+package com.nishadmathur.util
 
+import java.nio.ByteBuffer
 import javax.print.attribute.standard.MediaSize
 
 /**
@@ -7,6 +8,14 @@ import javax.print.attribute.standard.MediaSize
  * Date: 12/10/2015
  * Time: 12:38
  */
+
+fun Int.toByteArray(): ByteArray {
+    return ByteBuffer.allocate(4).putInt(this).array();
+}
+
+fun Double.toByteArray(): ByteArray {
+    return ByteBuffer.allocate(8).putDouble(this).array();
+}
 
 fun intToByteArray(words: Int, withWidth: Int): ByteArray {
     val bytes = ByteArray(withWidth)

@@ -1,0 +1,30 @@
+{
+  tokens=[
+    comment = 'regexp://.*'
+    number = 'regexp:\d+(\.\d*)?'
+    id = 'regexp:\p{Alpha}(\w| \w)*'
+    string = "regexp:('([^'\\]|\\.)*'|\"([^\"\\]|\\.)*\")"
+    EOL = "\r|\n|\r\n"
+    LINE_WS="[ \t\f]"
+    WS = 'regexp:\s+'
+    byte_size = "regexp:\d+byte"
+    bit_size = "regexp:\d+bit"
+    hexidecimal = "regexp:0x[0-9a-fA-F]+"
+  ]
+}
+
+configuration ::= section+
+
+block ::= '{' EOL (( dictionary | section | property) EOL+)* '}'
+
+dictionary ::= dictionary_keywords? string block
+
+dictionary_keywords ::= "meta"
+
+section ::= id block
+
+property ::= (id | string) ':' expression
+
+expression ::= string | number | regex | bit_size | hexidecimal
+
+regex ::= "regex(" string ")"

@@ -1,7 +1,8 @@
 package com.nishadmathur.instructions
 
-import com.nishadmathur.assembler.join
 import com.nishadmathur.references.Reference
+import com.nishadmathur.util.SizedByteArray
+import com.nishadmathur.util.join
 import java.util.*
 
 /**
@@ -10,20 +11,16 @@ import java.util.*
  * Time: 09:08
  */
 class TypedInstruction(override val arguments: List<Reference>,
-                       val rawLiteral: ByteArray,
-                       val instructionIdentifierWordSize: Int): Instruction {
+                       val rawLiteral: SizedByteArray) : Instruction {
 
-    override val raw: ByteArray
+    override val raw: SizedByteArray
         get() {
-            val rawArguments = join(arguments.map { argument -> argument.raw })
-            val destinationArray = ByteArray(this.rawLiteral.size() + rawArguments.size())
+            val bytes = arrayListOf(rawLiteral)
+            bytes.addAll(arguments.map { argument -> argument.raw })
 
-            System.arraycopy(this.rawLiteral, 0, destinationArray, 0, this.rawLiteral.size())
-            System.arraycopy(rawArguments, 0, destinationArray, this.rawLiteral.size(), rawArguments.size())
-
-            return destinationArray
+            return SizedByteArray.join(bytes)
         }
 
     override val size: Int
-        get() = instructionIdentifierWordSize + arguments.map { argument -> argument.size }.sum()
+        get() = rawLiteral.bitSize + arguments.map { argument -> argument.size }.sum()
 }

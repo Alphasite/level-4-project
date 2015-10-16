@@ -1,7 +1,9 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.assembler.IdentifierTable
 import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.errors.DataSourceParseError
+import java.io.Serializable
 import kotlin.text.Regex
 
 /**
@@ -11,8 +13,10 @@ import kotlin.text.Regex
  */
 class LabelReferenceFactory(override val type: String,
                             val factory: ReferenceFactory,
+                            val labelTable: IdentifierTable,
+                            val size: Int,
                             labelRegex: Regex,
-                            labelExtractionRegex: Regex) : ReferenceFactory {
+                            labelExtractionRegex: Regex) : ReferenceFactory, Serializable {
 
     private val memoryRegex = labelRegex
     private val memoryExtractionRegex = labelExtractionRegex
@@ -24,7 +28,7 @@ class LabelReferenceFactory(override val type: String,
     override fun getInstanceIfIsMatch(reference: String): LabelReference {
         if (checkIsMatch(reference)) {
             val label = memoryExtractionRegex.match(reference)
-            return LabelReference(label!!.groups.get(0).toString(), 32)
+            return LabelReference(label!!.groups.get(0).toString(), labelTable, size)
         } else {
             throw DataSourceParseError("Error extracting label from $reference")
         }

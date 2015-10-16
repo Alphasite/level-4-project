@@ -1,5 +1,7 @@
 package com.nishadmathur.references
 
+import java.io.Serializable
+
 /**
  * User: nishad
  * Date: 04/10/2015

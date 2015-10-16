@@ -2,6 +2,7 @@ package com.nishadmathur.references
 
 import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.errors.DataSourceParseError
+import java.io.Serializable
 import kotlin.text.Regex
 
 /**
@@ -11,8 +12,9 @@ import kotlin.text.Regex
  */
 class LiteralReferenceFactory(override val type: String,
                               val literalType: LiteralType,
+                              val literalSize: Int,
                               val literalRegex: Regex,
-                              val literalExtractionRegex: Regex) : ReferenceFactory {
+                              val literalExtractionRegex: Regex) : ReferenceFactory, Serializable {
 
     override fun checkIsMatch(reference: String): Boolean = literalRegex.matches(reference)
 
@@ -20,7 +22,7 @@ class LiteralReferenceFactory(override val type: String,
         val match = literalExtractionRegex.match(reference)
 
         if (match != null) {
-            return LiteralReference(32, literalType.convertValue(match.groups.get(0)!!.value))
+            return LiteralReference(literalType.convertValue(match.groups.get(0)!!.value, literalSize))
         } else {
             throw DataSourceParseError("Error converting the literal '$reference' into a $literalType")
         }

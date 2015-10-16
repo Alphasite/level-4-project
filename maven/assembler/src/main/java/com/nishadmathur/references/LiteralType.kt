@@ -1,5 +1,8 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.util.SizedByteArray
+import com.nishadmathur.util.toByteArray
+
 /**
  * User: nishad
  * Date: 13/10/2015
@@ -7,22 +10,22 @@ package com.nishadmathur.references
  */
 enum class LiteralType {
     BINARY {
-        override fun convertValue(value: String): ByteArray {
-            return byteArrayOf(0)
+        override fun convertValue(value: String, size: Int): SizedByteArray {
+            return SizedByteArray(ByteArray(0), size)
         }
     },
 
     HEXADECIMAL {
-        override fun convertValue(value: String): ByteArray {
-            return byteArrayOf(0)
+        override fun convertValue(value: String, size: Int): SizedByteArray {
+            return SizedByteArray(ByteArray(0), size)
         }
     },
 
     INTEGER {
-        override fun convertValue(value: String): ByteArray {
-            return byteArrayOf(value.toInt().toByte())
+        override fun convertValue(value: String, size: Int): SizedByteArray {
+            return SizedByteArray(value.toInt().toByteArray(), size)
         }
     };
 
-    abstract fun convertValue(value: String): ByteArray
+    abstract fun convertValue(value: String, size: Int): SizedByteArray
 }

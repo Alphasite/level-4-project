@@ -1,22 +1,15 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.errors.DataSourceParseError
-import dagger.Module
-import dagger.Provides
+import java.io.Serializable
 import java.util.*
-
-import javax.inject.Singleton
 
 /**
  * User: nishad
  * Date: 05/10/2015
  * Time: 05:57
  */
-@Module
-class MetaReferenceFactory: ReferenceFactory {
-
-    override val type: String
-        get() = throw UnsupportedOperationException()
+class MetaReferenceFactory(override val type: String): ReferenceFactory, Serializable {
 
     internal var referenceFactories: TreeSet<Pair<Int, ReferenceFactory>>
     internal var referenceFactoriesMapping: MutableMap<String, ReferenceFactory>
@@ -50,10 +43,6 @@ class MetaReferenceFactory: ReferenceFactory {
 
     operator fun get(factoryName: String): ReferenceFactory? {
         return referenceFactoriesMapping[factoryName]
-    }
-
-    @Provides @Singleton private fun provideMetaReferenceFactor(): MetaReferenceFactory {
-        return MetaReferenceFactory()
     }
 }
 

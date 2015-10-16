@@ -7,22 +7,20 @@ import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.references.MetaReferenceFactory
 import com.nishadmathur.references.Reference
 import com.nishadmathur.references.ReferenceFactory
+import com.nishadmathur.util.intToByteArray
 import sun.tools.asm.Assembler
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileReader
 import java.util.*
 import java.util.stream.IntStream
-import javax.inject.Inject
 
 /**
  * User: nishad
  * Date: 12/10/2015
  * Time: 09:08
  */
-class Assembler(var instructionFactory: MetaInstructionFactory) {
-    var identifier: Int = 0
-    val identifierTable = IdentifierTable()
+class Assembler(val instructionFactory: MetaInstructionFactory, val identifierTable: IdentifierTable) {
     val lines = ArrayList<Line>()
     val word_size = 32
 
@@ -47,7 +45,7 @@ class Assembler(var instructionFactory: MetaInstructionFactory) {
         this.loadFile(file)
         this.lines.forEach { it.parseLine(instructionFactory = instructionFactory, labelTable = identifierTable) }
 
-        var instructionBytes = this.lines map { it.instruction?.raw } filter { (it?.size() ?: 0) > 0 }
+        var instructionBytes = this.lines map { it.instruction?.raw } filter { (it?.bitSize ?: 0) > 0 }
         var labels = this.lines map { it.label } filter { it != null }
 
         println("Instructions:")
@@ -55,7 +53,7 @@ class Assembler(var instructionFactory: MetaInstructionFactory) {
         println()
 
         println("Raw Bytes:")
-        instructionBytes.forEach { println(Arrays.toString(it)) }
+        instructionBytes.forEach { println(it) }
         println()
 
         println("Labels:")

@@ -1,0 +1,44 @@
+configuration
+	word size: 64bit
+	a: 1
+
+
+argument formats
+	"hexidecimal"
+    	regex: regex("0x(\d+)")
+    	capture group: 0
+
+	"register"
+    	regex: regex("\d+")
+		capture group: 0
+
+instructions
+	meta "load"
+		"loadr"
+			byte sequence: 0x01
+			// This can be inferred, it overrides the default calculated value.
+			byte length: 3byte
+			"source": register
+			"destination": register
+
+		"loadl"
+			byte sequence: 0x02
+			"value": literal
+			"destination": register
+
+	"add"
+		byte sequence: 0x03
+		"source": register
+		"destination": register
+
+directives
+	".string"
+		alias builtin: ascii
+
+	// Im really not sure how exactly to handle this, without special casing it.
+	".global"
+		external: python
+		file: "directives.py"
+		function: generate_global
+		arguments:
+			segments: "__SEGMENTS__"

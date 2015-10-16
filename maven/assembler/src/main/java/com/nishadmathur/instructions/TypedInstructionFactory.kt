@@ -1,11 +1,11 @@
 package com.nishadmathur.instructions
 
-import com.nishadmathur.assembler.enumerate
-import com.nishadmathur.assembler.join
 import com.nishadmathur.errors.IncorrectTypeError
 import com.nishadmathur.errors.InstructionParseError
 import com.nishadmathur.references.Reference
 import com.nishadmathur.references.ReferenceFactory
+import com.nishadmathur.util.SizedByteArray
+import java.io.Serializable
 
 /**
  * User: nishad
@@ -14,8 +14,7 @@ import com.nishadmathur.references.ReferenceFactory
  */
 class TypedInstructionFactory(override val identifier: String,
                               val arguments: List<Pair<String, ReferenceFactory>>,
-                              val rawLiteral: ByteArray,
-                              val instructionIdentifierWordSize: Int): InstructionFactory<Instruction> {
+                              val rawLiteral: SizedByteArray): InstructionFactory<Instruction>, Serializable {
 
     override val help: String
         get() = identifier + " " + arguments.map { argument -> "<${argument.first}:${argument.second.type}>"}.join(" ")
@@ -34,7 +33,7 @@ class TypedInstructionFactory(override val identifier: String,
                 }
             }
 
-            return TypedInstruction(argumentReferences, rawLiteral, instructionIdentifierWordSize)
+            return TypedInstruction(argumentReferences, rawLiteral)
         } else {
             throw InstructionParseError("$identifier could not be parsed correctly, it should be in the form '$help'")
         }

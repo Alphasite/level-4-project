@@ -2,6 +2,7 @@ package com.nishadmathur.instructions
 
 import com.nishadmathur.errors.AbstractInstructionInstantiationError
 import com.nishadmathur.errors.InstructionParseError
+import java.io.Serializable
 
 /**
  * User: nishad
@@ -9,7 +10,7 @@ import com.nishadmathur.errors.InstructionParseError
  * Time: 15:37
  */
 class TypePolymorphicInstructionFactory(override val identifier: String,
-                                        val factories: Collection<InstructionFactory<Instruction>>) : InstructionFactory<Instruction> {
+                                        val factories: Collection<InstructionFactory<Instruction>>) : InstructionFactory<Instruction>, Serializable {
     override val help: String
         get() = throw UnsupportedOperationException()
 

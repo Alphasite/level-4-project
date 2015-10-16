@@ -1,6 +1,7 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.errors.DataSourceParseError
+import java.io.Serializable
 import kotlin.text.Regex
 
 /**
@@ -10,7 +11,7 @@ import kotlin.text.Regex
  */
 class IndexedReferenceFactory(override val type: String,
                               val memoryRegex: Regex,
-                              val factory: ReferenceFactory): ReferenceFactory {
+                              val factory: ReferenceFactory): ReferenceFactory, Serializable {
 
     override fun checkIsMatch(reference: String): Boolean {
         if (reference.matches(memoryRegex)) {
@@ -58,7 +59,7 @@ class IndexedReferenceFactory(override val type: String,
                 throw DataSourceParseError("Memory data sources cannot be nested")
             }
 
-            return IndexedReference(sourceAddress, offsetAddress, size = 32)
+            return IndexedReference(sourceAddress, offsetAddress)
         } else {
             throw DataSourceParseError("Error extracting memory reference from $reference")
         }

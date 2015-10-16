@@ -13,7 +13,7 @@ class IdentifierTable {
         return this.table[index]
     }
 
-    operator fun set(index: String, value: Int) {
-        this.table[index] = value
+    fun add(index: String) {
+        this.table[index] = this.table[index] ?: nextIdentifier++
     }
 }

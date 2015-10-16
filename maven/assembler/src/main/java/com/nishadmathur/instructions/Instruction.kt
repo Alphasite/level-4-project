@@ -1,6 +1,7 @@
 package com.nishadmathur.instructions
 
 import com.nishadmathur.references.Reference
+import com.nishadmathur.util.SizedByteArray
 import java.util.*
 
 /**
@@ -9,11 +10,9 @@ import java.util.*
  * Time: 09:04
  */
 interface Instruction {
-    val raw: ByteArray
+    val raw: SizedByteArray
     val size: Int
     val arguments: List<Reference>
 
-    override fun toString(): String {
-        return "${Arrays.toString(raw)} Args@{${arguments.joinToString(", ")}}"
-    }
+    override fun toString(): String = "$raw Args@{${arguments.joinToString(", ")}}"
 }

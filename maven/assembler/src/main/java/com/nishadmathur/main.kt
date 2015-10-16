@@ -1,9 +1,14 @@
 package com.nishadmathur
 
 import com.nishadmathur.assembler.Assembler
+import com.nishadmathur.assembler.IdentifierTable
+import com.nishadmathur.assembler.Label
 import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.instructions.TypedInstructionFactory
 import com.nishadmathur.references.*
+import com.nishadmathur.util.SizedByteArray
+import com.nishadmathur.util.toByteArray
+import java.util.*
 
 /**
  * User: nishad
@@ -12,8 +17,9 @@ import com.nishadmathur.references.*
  */
 
 class Main {
-    val referenceFactory = MetaReferenceFactory()
+    val referenceFactory = MetaReferenceFactory("All")
     val instructionFactory = MetaInstructionFactory()
+    val identiferTable = IdentifierTable()
 
     init {
         referenceFactory.addReference(
@@ -23,25 +29,25 @@ class Main {
 
         referenceFactory.addReference(
             MappedReferenceFactory("register", mapOf(
-                Pair("r0", byteArrayOf(0)),
-                Pair("r1", byteArrayOf(1)),
-                Pair("r2", byteArrayOf(2)),
-                Pair("r3", byteArrayOf(3)),
-                Pair("r4", byteArrayOf(4)),
-                Pair("r5", byteArrayOf(5)),
-                Pair("r6", byteArrayOf(6)),
-                Pair("r7", byteArrayOf(7))
+                Pair("r0", SizedByteArray(0.toByteArray(), 4)),
+                Pair("r1", SizedByteArray(1.toByteArray(), 4)),
+                Pair("r2", SizedByteArray(2.toByteArray(), 4)),
+                Pair("r3", SizedByteArray(3.toByteArray(), 4)),
+                Pair("r4", SizedByteArray(4.toByteArray(), 4)),
+                Pair("r5", SizedByteArray(5.toByteArray(), 4)),
+                Pair("r6", SizedByteArray(6.toByteArray(), 4)),
+                Pair("r7", SizedByteArray(7.toByteArray(), 4))
             )),
             2
         )
 
         referenceFactory.addReference(
-            LiteralReferenceFactory("number", LiteralType.INTEGER, "\\d+".toRegex(), "(\\d+)".toRegex()),
+            LiteralReferenceFactory("number", LiteralType.INTEGER, 8, "\\d+".toRegex(), "(\\d+)".toRegex()),
             3
         )
 
         referenceFactory.addReference(
-            LabelReferenceFactory("label", referenceFactory, "^#\\w+$".toRegex(), "(?<=#)\\w+".toRegex()),
+            LabelReferenceFactory("label", referenceFactory, identiferTable, 8, "^#\\w+$".toRegex(), "(?<=#)\\w+".toRegex()),
             3
         )
 
@@ -53,8 +59,7 @@ class Main {
                     Pair("value", referenceFactory["number"]!!),
                     Pair("destination", referenceFactory["register"]!!)
                 ),
-                byteArrayOf(0.toByte()),
-                8
+                SizedByteArray(1.toByteArray(), 8)
             )
         )
 
@@ -66,8 +71,7 @@ class Main {
                     Pair("rhs", referenceFactory["register"]!!),
                     Pair("destination", referenceFactory["register"]!!)
                 ),
-                byteArrayOf(1.toByte()),
-                8
+                SizedByteArray(2.toByteArray(), 8)
             )
         )
     }
@@ -76,6 +80,6 @@ class Main {
 fun main(args: Array<String>) {
     val main = Main()
 
-    Assembler(instructionFactory = main.instructionFactory).assemble("test.asm")
+    Assembler(instructionFactory = main.instructionFactory, identifierTable = main.identiferTable).assemble("test.asm")
 }
 

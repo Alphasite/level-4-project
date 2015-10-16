@@ -1,5 +1,6 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.util.SizedByteArray
 import java.util.*
 
 /**
@@ -7,10 +8,13 @@ import java.util.*
  * Date: 04/10/2015
  * Time: 20:49
  */
-class IndexedReference(val source: Reference, val offset: Reference, override val size: Int) : Reference {
+class IndexedReference(val source: Reference, val offset: Reference) : Reference {
 
-    override val raw: ByteArray
-        get() = ByteArray(0)
+    override val size: Int
+        get() = source.raw.bitSize + offset.raw.bitSize
 
-    override fun toString(): String = "$source[$offset]@${Arrays.toString(raw)}[$size]"
+    override val raw: SizedByteArray
+        get() = SizedByteArray.join(listOf(source.raw, offset.raw))
+
+    override fun toString(): String = "$source[$offset]#$raw"
 }
