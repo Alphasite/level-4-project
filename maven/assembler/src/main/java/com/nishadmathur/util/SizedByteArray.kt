@@ -41,7 +41,7 @@ class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
                     var (word, length) = currentByte(byteArray, bitSize, j, bytesToSkip)
 
                     if (byteArrays[i].bitSize < 8) {
-                        word = (word.toInt() shl (8 - byteArrays[i].bitSize)).toByte()
+                        word = (word.toInt() shl (8 - bitSize)).toByte()
                     }
 
                     byte = ((byte.toInt() shl (8 - currentByteBitsRead)) or (word.toInt() ushr currentByteBitsRead)).toByte()
