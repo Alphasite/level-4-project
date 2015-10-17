@@ -3,6 +3,7 @@ package com.nishadmathur.assembler
 import com.nishadmathur.errors.LineParseError
 import com.nishadmathur.instructions.Instruction
 import com.nishadmathur.instructions.InstructionFactory
+import com.nishadmathur.util.SizedByteArray
 
 /**
  * User: nishad
@@ -14,9 +15,9 @@ class Line(val lineNumber: Int, val line: String) {
     var label: Label? = null
     var instruction: Instruction? = null
 
-    var offset: ByteArray? = null
+    var offset: SizedByteArray? = null
         set(offset) {
-            this.offset = offset
+            field = offset
             this.label?.offset = offset
         }
 

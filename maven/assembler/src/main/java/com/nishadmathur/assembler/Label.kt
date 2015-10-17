@@ -1,33 +1,26 @@
 package com.nishadmathur.assembler
 
+import com.nishadmathur.util.SizedByteArray
+import com.nishadmathur.util.toByteArray
+
 /**
  * User: nishad
  * Date: 12/10/2015
  * Time: 09:13
  */
-class Label(val identifier: String, val IdentifierTable: IdentifierTable) {
-    var offset: ByteArray? = null
+class Label(val identifier: String, val identifierTable: IdentifierTable) {
+    var offset: SizedByteArray? = SizedByteArray((identifierTable.nextIdentifier++).toByteArray(), identifierTable.size)
 
-    val linkIdentifier: Byte?
-        get() = this.IdentifierTable[this.identifier]?.toByte()
-
-    val raw: ByteArray
+    val raw: SizedByteArray
         get() {
-            val bytes = ByteArray(1 + (offset?.size() ?: 0))
-            bytes[0] = linkIdentifier ?: 0
-
-            if (offset != null) {
-                System.arraycopy(offset, 0, bytes, 1, offset!!.size())
-            }
-
-            return bytes
+            return offset ?: SizedByteArray(0.toByteArray(), 0)
         }
 
     init {
-        this.IdentifierTable.table.put(identifier, IdentifierTable.nextIdentifier++)
+        this.identifierTable.table.put(identifier, this)
     }
 
     override fun toString(): String {
-        return "$identifier[$IdentifierTable]:"
+        return "$identifier[$identifierTable]:"
     }
 }

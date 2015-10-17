@@ -8,7 +8,9 @@ import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.references.MetaReferenceFactory
 import com.nishadmathur.references.Reference
 import com.nishadmathur.references.ReferenceFactory
+import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.intToByteArray
+import com.nishadmathur.util.toByteArray
 import sun.tools.asm.Assembler
 import java.io.BufferedInputStream
 import java.io.File
@@ -47,6 +49,8 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
         this.loadFile(file)
         this.lines.forEach { it.parseLine(instructionFactory = instructionFactory, labelTable = identifierTable) }
 
+        calculateOffsets(lines)
+
         var instructionBytes = this.lines map { it.instruction?.raw } filter { (it?.bitSize ?: 0) > 0 }
         var labels = this.lines map { it.label } filter { it != null }
 
@@ -70,9 +74,9 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
         var offsetLines = arrayListOf<Line>()
 
         for (line in lines) {
-            line.offset = intToByteArray(offset, word_size)
+            line.offset = SizedByteArray(offset.toByteArray(), 8)
             offsetLines.add(line)
-            offset += line.size
+            offset += line.size / 8 // Size is bit size not byte size.
         }
 
         return offsetLines

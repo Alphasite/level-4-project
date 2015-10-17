@@ -17,9 +17,10 @@ import com.nishadmathur.util.toByteArray
  */
 fun configure(): Pair<InstructionFactory, IdentifierTable> {
 
+    val addressWidth = 8
     val referenceFactory = MetaReferenceFactory("All")
     val instructionFactory = MetaInstructionFactory()
-    val identifierTable = IdentifierTable()
+    val identifierTable = IdentifierTable(addressWidth)
 
     referenceFactory.addReference(
         MappedReferenceFactory("register", mapOf(

@@ -27,7 +27,7 @@ class LabelReferenceFactory(override val type: String,
     override fun getInstanceIfIsMatch(reference: String): LabelReference {
         if (checkIsMatch(reference)) {
             val label = memoryExtractionRegex.match(reference)
-            return LabelReference(label!!.groups.get(0).toString(), labelTable, size)
+            return LabelReference(label!!.groups.get(0)!!.value, labelTable, size)
         } else {
             throw DataSourceParseError("Error extracting label from $reference")
         }

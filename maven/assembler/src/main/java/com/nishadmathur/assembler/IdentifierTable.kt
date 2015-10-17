@@ -5,15 +5,18 @@ package com.nishadmathur.assembler
  * Date: 13/10/2015
  * Time: 19:23
  */
-class IdentifierTable {
+class IdentifierTable(val size: Int) {
     var nextIdentifier = 0
-    val table: MutableMap<String, Int> = hashMapOf()
+        get() = field++
 
-    operator fun get(index: String): Int? {
+    val table: MutableMap<String, Label> = hashMapOf()
+
+    operator fun get(index: String): Label? {
         return this.table[index]
     }
 
     fun add(index: String) {
-        this.table[index] = this.table[index] ?: nextIdentifier++
+        this.table[index] = Label(index, this)
+            this.table[index] ?: nextIdentifier++
     }
 }
