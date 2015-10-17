@@ -11,26 +11,27 @@ import kotlin.text.Regex
  */
 class IndexedReferenceFactory(override val type: String,
                               val memoryRegex: Regex,
-                              val factory: ReferenceFactory): ReferenceFactory, Serializable {
+                              val validLeftSideReferenceTypes: List<ReferenceFactory>,
+                              val validRightSideReferenceStrings: List<ReferenceFactory>): ReferenceFactory, Serializable {
 
     override fun checkIsMatch(reference: String): Boolean {
-        if (reference.matches(memoryRegex)) {
-            val matches = memoryRegex.matchAll(reference).toList()
+        val matches = memoryRegex.matchAll(reference)
 
-            if (matches.count() != 1) {
-                return false
-            }
-
-            val match = matches[0]
-
-            if (!reference.matches("\\[.*$memoryRegex.*\\]".toRegex())) {
-                return false
-            }
-
-            return true
-        } else {
+        if (matches.count() != 1) {
             return false
         }
+
+        val matcher = matches.first()
+        val groups = matcher.groups
+
+        if (groups.size() < 2) {
+            return false
+        }
+
+        val leftSide = validLeftSideReferenceTypes any { it.checkIsMatch(groups.get(1)!!.value) }
+        val rightSide = validRightSideReferenceStrings any { it.checkIsMatch(groups.get(2)!!.value) }
+
+        return leftSide && rightSide
     }
 
     override fun getInstanceIfIsMatch(reference: String): IndexedReference {
@@ -42,18 +43,23 @@ class IndexedReferenceFactory(override val type: String,
             }
 
             val match = matches[0]
+            val groups = match.groups
 
-            if (!reference.matches("\\[.*$memoryRegex.*\\]".toRegex())) {
-                throw DataSourceParseError("Memory data sources cannot be nested; '$reference'")
+            if (groups.size() < 2) {
+                throw DataSourceParseError("Memory reference appears to be incomplete: '$reference'")
             }
 
-            val sourceAddress = factory.getInstanceIfIsMatch(match.groups.get(1)!!.value)
-            val offsetAddress = factory.getInstanceIfIsMatch(match.groups.get(2)!!.value)
+            val sourceAddress = validLeftSideReferenceTypes
+                .first { it.checkIsMatch(groups.get(1)!!.value) }
+                .getInstanceIfIsMatch(groups.get(1)!!.value)
+
+            val offsetAddress = validRightSideReferenceStrings
+                .first { it.checkIsMatch(groups.get(2)!!.value) }
+                .getInstanceIfIsMatch(groups.get(2)!!.value)
 
             if (sourceAddress is IndexedReference) {
                 throw DataSourceParseError("Memory data sources cannot be nested")
             }
-
 
             if (offsetAddress is IndexedReference) {
                 throw DataSourceParseError("Memory data sources cannot be nested")

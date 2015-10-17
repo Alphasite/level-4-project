@@ -5,9 +5,10 @@ package com.nishadmathur.instructions
  * Date: 12/10/2015
  * Time: 12:24
  */
-interface InstructionFactory<T: Instruction> {
-    fun checkIsMatch(instruction: List<String>, ignoreIdentifier: Boolean = false): Boolean
-    fun getInstanceIfIsMatch(instruction: List<String>, ignoreIdentifier: Boolean = false): T
+interface InstructionFactory {
+    fun checkIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean = false): Boolean
+    fun checkTypeSignatureIsMatch(instruction: List<String>): Boolean
+    fun getInstanceIfIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean = false): Instruction
     val identifier: String
     val help: String
 }

@@ -8,30 +8,37 @@ import sun.tools.jstat.Identifier
  * Date: 12/10/2015
  * Time: 12:24
  */
-class MetaInstructionFactory: InstructionFactory<Instruction> {
+class MetaInstructionFactory: InstructionFactory {
+
+    val factories = arrayListOf<InstructionFactory>()
+
     override val identifier: String
         get() = throw UnsupportedOperationException()
 
     override val help: String
         get() = throw UnsupportedOperationException()
 
-    val factories = arrayListOf<InstructionFactory<Instruction>>()
-
-    override fun checkIsMatch(instruction: List<String>, ignoreIdentifier: Boolean): Boolean {
-        return factories.find { it.checkIsMatch(instruction, ignoreIdentifier = ignoreIdentifier) } != null
+    override fun checkIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean): Boolean {
+        return factories.find { it.checkIsMatch(name, arguments, ignoreIdentifier = ignoreIdentifier) } != null
     }
 
-    override fun getInstanceIfIsMatch(instruction: List<String>, ignoreIdentifier: Boolean): Instruction {
-        if (checkIsMatch(instruction, ignoreIdentifier)) {
+    override fun checkTypeSignatureIsMatch(instruction: List<String>): Boolean {
+        throw UnsupportedOperationException(
+            "The meta instruction factory does not support type checking, but i could be convinced."
+        )
+    }
+
+    override fun getInstanceIfIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean): Instruction {
+        if (checkIsMatch(name, arguments, ignoreIdentifier)) {
             return factories
-                .first { it.checkIsMatch(instruction) }
-                .getInstanceIfIsMatch(instruction)
+                .first { it.checkIsMatch(name, arguments) }
+                .getInstanceIfIsMatch(name, arguments)
         } else {
-            throw InstructionParseError("Error parsing instruction '$instruction', it doesnt appear to match any known instructions.")
+            throw InstructionParseError("Error parsing instruction '$name' with arguments: '$arguments', it doesnt appear to match any known instructions.")
         }
     }
 
-    fun addInstruction(referenceFactory: InstructionFactory<Instruction>) {
+    fun addInstruction(referenceFactory: InstructionFactory) {
         this.factories.add(referenceFactory)
     }
 }

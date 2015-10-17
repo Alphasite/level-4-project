@@ -30,7 +30,7 @@ class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
             var byte: Byte = 0
 
             // This buffer needs to start a few bits right shifted, so that whole array is right aligned, not left.
-            var currentByteBitsRead = 8 - (totalSize % 8) // i.e. XX11 0011 instead of 1100 11XX
+            var currentByteBitsRead = (8 - (totalSize % 8)) % 8// i.e. XX11 0011 instead of 1100 11XX
 
             for (i in 0 until byteArrays.size()) {
                 val byteArray = byteArrays[i].byteArray
@@ -40,7 +40,7 @@ class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
                 for (j in bytesToSkip until byteArray.size()) {
                     var (word, length) = currentByte(byteArray, bitSize, j, bytesToSkip)
 
-                    if (byteArrays[i].bitSize < 8) {
+                    if (bitSize < 8) {
                         word = (word.toInt() shl (8 - bitSize)).toByte()
                     }
 

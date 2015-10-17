@@ -12,7 +12,6 @@ import kotlin.text.Regex
  * Time: 21:01
  */
 class LabelReferenceFactory(override val type: String,
-                            val factory: ReferenceFactory,
                             val labelTable: IdentifierTable,
                             val size: Int,
                             labelRegex: Regex,

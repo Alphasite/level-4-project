@@ -3,6 +3,7 @@ package com.nishadmathur.assembler
 import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.errors.LineParseError
 import com.nishadmathur.instructions.Instruction
+import com.nishadmathur.instructions.InstructionFactory
 import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.references.MetaReferenceFactory
 import com.nishadmathur.references.Reference
@@ -20,12 +21,13 @@ import java.util.stream.IntStream
  * Date: 12/10/2015
  * Time: 09:08
  */
-class Assembler(val instructionFactory: MetaInstructionFactory, val identifierTable: IdentifierTable) {
+class Assembler(val instructionFactory: InstructionFactory, val identifierTable: IdentifierTable) {
     val lines = ArrayList<Line>()
     val word_size = 32
 
     fun loadFile(path: String) {
         Scanner(FileReader(path)).use {
+
             var stringLines: MutableList<String> = ArrayList()
 
             while (it.hasNextLine()) {

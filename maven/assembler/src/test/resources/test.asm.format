@@ -1,25 +1,50 @@
 configuration
-	word size: 64bit
-	a: 1
+	line can start with label: true
 
 
-argument formats
-	"hexidecimal"
-    	regex: regex("0x(\d+)")
-    	capture group: 0
+
+data formats
+	"hexadecimal"
+		kind: literal
+    	regex: "0x(\d+)"
+    	capture group: 1
+
+    "integer"
+        kind: literal
+        regex: "(\d+)"
+        capture group: 1
 
 	"register"
-    	regex: regex("\d+")
+		kind: mapping
+    	regex: "\d+"
 		capture group: 0
+		size: 8 bits
+		mappings:
+			"r0": 0x0
+			"r1": 0x1
+			"r2": 0x2
+			"r3": 0x3
+			"r4": 0x4
+			"r5": 0x5
+			"r6": 0x6
+			"r7": 0x7
+
+	"label"
+		kind: label
+		validation regex: "^#\\w+$"
+		extraction regex: "(?<=#)\\w+"
+
+	"memory"
+		kind: indexed
+		regex: "(\\d+|r\\d+|#\\w+)\\[(\\d+|r\\d+)\\]"
 
 instructions
 	meta "load"
 		"loadr"
 			byte sequence: 0x01
-			// This can be inferred, it overrides the default calculated value.
-			byte length: 3byte
-			"source": register
-			"destination": register
+			size: 24 bits
+			source: register
+			destination: register
 
 		"loadl"
 			byte sequence: 0x02

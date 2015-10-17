@@ -10,28 +10,40 @@ import java.io.Serializable
  * Time: 15:37
  */
 class TypePolymorphicInstructionFactory(override val identifier: String,
-                                        val factories: Collection<InstructionFactory<Instruction>>) : InstructionFactory<Instruction>, Serializable {
+                                        val factories: Collection<InstructionFactory>) : InstructionFactory, Serializable {
+
     override val help: String
         get() = throw UnsupportedOperationException()
 
-    override fun checkIsMatch(instruction: List<String>, ignoreIdentifier: Boolean): Boolean {
-        if (instruction.size() > 0 && instruction[0] == identifier) {
-            return factories.any { it.checkIsMatch(instruction, ignoreIdentifier = true) }
+    val possibleIdentifiers: Set<String>
+        get() {
+            val identifiers = hashSetOf(identifier)
+            identifiers.addAll(factories.map { it.identifier })
+            return identifiers
+        }
+
+    override fun checkIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean): Boolean {
+        if (name in possibleIdentifiers) {
+            return factories any { it.checkIsMatch(name, arguments, ignoreIdentifier = true) }
         } else {
             return false
         }
     }
 
-    override fun getInstanceIfIsMatch(instruction: List<String>, ignoreIdentifier: Boolean): Instruction {
-        if (checkIsMatch(instruction) || ignoreIdentifier) {
+    override fun checkTypeSignatureIsMatch(instruction: List<String>): Boolean {
+        return factories any { it.checkTypeSignatureIsMatch(instruction) }
+    }
+
+    override fun getInstanceIfIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean): Instruction {
+        if ((checkIsMatch(name, arguments) || ignoreIdentifier) && checkTypeSignatureIsMatch(arguments)) {
             return factories
-                .first { it.checkIsMatch(instruction, ignoreIdentifier = true) }
-                .getInstanceIfIsMatch(instruction)
+                .first { it.checkIsMatch(name, arguments, ignoreIdentifier = true) && it.checkTypeSignatureIsMatch(arguments)}
+                .getInstanceIfIsMatch(name, arguments, ignoreIdentifier = true)
         } else {
             throw AbstractInstructionInstantiationError(
                 factories.map { it.help }.join(
                     separator = "\n\t",
-                    postfix = "\n",
+                    postfix = "\n\tNot $identifier <${arguments.join("> <")}>\n",
                     prefix = "The polymorphic instruction $identifier should match the form of one of following:\n\t"
                 )
             )

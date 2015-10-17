@@ -24,19 +24,17 @@ class Line(val lineNumber: Int, val line: String) {
     val size: Int
         get() = this.instruction?.size ?: 0
 
-    fun parseLine(instructionFactory: InstructionFactory<Instruction>, labelTable: IdentifierTable) {
+    fun parseLine(instructionFactory: InstructionFactory, labelTable: IdentifierTable) {
         val sections = line.split(":").filter { it != "" }
 
         if (sections.size() != 1) {
             throw LineParseError(
-                    "Line has more than 1 segment, you can have at most 1 label or 1 instruction per line; '$sections'"
+                "Line has more than 1 segment, you can have at most 1 label or 1 instruction per line; '$sections'"
             )
         }
 
-        if (line.matches("\\w:$".toRegex())) {
-            val label = line
-                    .removeSurrounding(":")
-                    .trim()
+        if (line.matches("\\w+:$".toRegex())) {
+            val label = line.trim(' ', '\n', '\r', ':')
 
             if (!label.matches("^\\w+$".toRegex())) {
                 throw LineParseError("The label has no text or contains non text characters; '$label'")
@@ -46,7 +44,7 @@ class Line(val lineNumber: Int, val line: String) {
 
         } else {
             val instructionSegments = this.line.split(" ").filter { it.length() > 0 }
-            this.instruction = instructionFactory.getInstanceIfIsMatch(instructionSegments)
+            this.instruction = instructionFactory.getInstanceIfIsMatch(instructionSegments[0], instructionSegments.drop(1))
         }
     }
 

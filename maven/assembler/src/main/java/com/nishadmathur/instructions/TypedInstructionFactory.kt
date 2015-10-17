@@ -13,23 +13,31 @@ import java.io.Serializable
  * Time: 15:51
  */
 class TypedInstructionFactory(override val identifier: String,
-                              val arguments: List<Pair<String, ReferenceFactory>>,
-                              val rawLiteral: SizedByteArray): InstructionFactory<Instruction>, Serializable {
+                              val argumentFactories: List<Pair<String, ReferenceFactory>>,
+                              val rawLiteral: SizedByteArray): InstructionFactory, Serializable {
 
     override val help: String
-        get() = identifier + " " + arguments.map { argument -> "<${argument.first}:${argument.second.type}>"}.join(" ")
+        get() = identifier + " " + argumentFactories.map { argument -> "<${argument.first}:${argument.second.type}>"}.join(" ")
 
-    override fun checkIsMatch(instruction: List<String>, ignoreIdentifier: Boolean): Boolean {
-        return (instruction[0] == identifier || ignoreIdentifier) && instruction.size() == arguments.size() + 1
+    override fun checkIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean): Boolean {
+        return (name == identifier || ignoreIdentifier)
+            && arguments.size() == argumentFactories.size()
     }
 
-    override fun getInstanceIfIsMatch(instruction: List<String>, ignoreIdentifier: Boolean): Instruction {
-        if (instruction.size() == arguments.size() + 1 && (checkIsMatch(instruction) || !ignoreIdentifier)) {
-            val argumentReferences = (0 until arguments.size()) map { i ->
-                if (arguments[i].second.checkIsMatch(instruction[i + 1])) {
-                    arguments[i].second.getInstanceIfIsMatch(instruction[i + 1])
+    override fun checkTypeSignatureIsMatch(instruction: List<String>): Boolean {
+        return (0 until argumentFactories.size()) all { argumentFactories[it].second.checkIsMatch(instruction[it]) }
+    }
+
+    override fun getInstanceIfIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean): Instruction {
+        if (arguments.size() == argumentFactories.size()
+            && checkIsMatch(name, arguments, ignoreIdentifier)
+            && checkTypeSignatureIsMatch(arguments)) {
+
+            val argumentReferences = (0 until argumentFactories.size()) map { i ->
+                if (argumentFactories[i].second.checkIsMatch(arguments[i])) {
+                    argumentFactories[i].second.getInstanceIfIsMatch(arguments[i])
                 } else {
-                    throw IncorrectTypeError("${arguments[i].first} expects its arguments in the form $help")
+                    throw IncorrectTypeError("${argumentFactories[i].first} expects its arguments in the form $help")
                 }
             }
 
