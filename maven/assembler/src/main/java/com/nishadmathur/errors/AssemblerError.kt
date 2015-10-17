@@ -9,7 +9,16 @@ import com.nishadmathur.assembler.Line
  */
 
 open class AssemblerError(message: String): Exception(message) {
-    var line: Line? = null
+    public var line: Line? = null
+
+    override fun toString(): String {
+        return "An error occurred while parsing line: \n\t"+
+            "${line?.lineNumber} '${line?.line}' \n\n" +
+            "Producing the error:\n\t" +
+            "${super.getMessage()}\n\n" +
+            super.toString() +
+            "\n"
+    }
 }
 
 class InstructionParseError(message: String): AssemblerError(message)

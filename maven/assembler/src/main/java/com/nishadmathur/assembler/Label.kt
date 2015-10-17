@@ -21,6 +21,6 @@ class Label(val identifier: String, val identifierTable: IdentifierTable) {
     }
 
     override fun toString(): String {
-        return "$identifier[$identifierTable]:"
+        return "#$identifier"
     }
 }

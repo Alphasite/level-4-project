@@ -47,11 +47,17 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
 
     fun assemble(file: String): ByteArray {
         this.loadFile(file)
-        this.lines.forEach { it.parseLine(instructionFactory = instructionFactory, labelTable = identifierTable) }
+
+        for (line in this.lines) {
+            annotateError(line) {
+                line.parseLine(instructionFactory = instructionFactory, labelTable = identifierTable)
+            }
+        }
 
         calculateOffsets(lines)
 
-        var instructionBytes = this.lines map { it.instruction?.raw } filter { (it?.bitSize ?: 0) > 0 }
+        var instructionBytes = this.lines map { annotateError(it) { it.instruction?.raw } } filter { (it?.bitSize ?: 0) > 0 }
+
         var labels = this.lines map { it.label } filter { it != null }
 
         println("Instructions:")
@@ -74,11 +80,29 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
         var offsetLines = arrayListOf<Line>()
 
         for (line in lines) {
-            line.offset = SizedByteArray(offset.toByteArray(), 8)
-            offsetLines.add(line)
-            offset += line.size / 8 // Size is bit size not byte size.
+            annotateError(line) {
+                line.offset = SizedByteArray(offset.toByteArray(), 8)
+                offsetLines.add(line)
+                offset += line.size / 8 // Size is bit size not byte size.
+            }
         }
 
         return offsetLines
+    }
+
+    companion object {
+        fun bail(error: Exception) {
+            System.err.println(error)
+            System.exit(-1)
+        }
+
+        fun annotateError<T>(line: Line, function: (Line) -> T): T {
+            try {
+                return function(line)
+            } catch (e: AssemblerError) {
+                e.line = line
+                throw e
+            }
+        }
     }
 }

@@ -52,8 +52,10 @@ class Line(val lineNumber: Int, val line: String) {
     override fun toString(): String {
         val line = StringBuilder()
 
+        line.append(lineNumber + 1)
+        line.append(" '")
         line.append(this.line)
-        line.append(": ")
+        line.append("': ")
 
         if (this.label != null) {
             line.append(this.label).append(" ")

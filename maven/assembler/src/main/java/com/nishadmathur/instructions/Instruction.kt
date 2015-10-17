@@ -14,5 +14,5 @@ interface Instruction {
     val size: Int
     val arguments: List<Reference>
 
-    override fun toString(): String = "$raw Args@{${arguments.joinToString(", ")}}"
+    override fun toString(): String = "$raw Args:{${arguments.joinToString(", ")}}"
 }
