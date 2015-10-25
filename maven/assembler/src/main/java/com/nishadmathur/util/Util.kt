@@ -9,12 +9,16 @@ import javax.print.attribute.standard.MediaSize
  * Time: 12:38
  */
 
+fun String.decode(): Long {
+    return java.lang.Long.decode(this)
+}
+
 fun Int.toByteArray(): ByteArray {
     return ByteBuffer.allocate(4).putInt(this).array();
 }
 
-fun Double.toByteArray(): ByteArray {
-    return ByteBuffer.allocate(8).putDouble(this).array();
+fun Long.toByteArray(): ByteArray {
+    return ByteBuffer.allocate(8).putLong(this).array();
 }
 
 fun intToByteArray(words: Int, withWidth: Int): ByteArray {
@@ -28,26 +32,26 @@ fun intToByteArray(words: Int, withWidth: Int): ByteArray {
 }
 
 fun join(vararg byteArrays: ByteArray): ByteArray {
-    val size = byteArrays map { it.size() } sumBy { it }
+    val size = byteArrays.map { it.size }.sumBy { it }
 
     var offset = 0
     var outputArray = ByteArray(size)
     for (byteArray in byteArrays) {
-        System.arraycopy(byteArray, 0, outputArray, offset, byteArray.size())
-        offset += byteArray.size()
+        System.arraycopy(byteArray, 0, outputArray, offset, byteArray.size)
+        offset += byteArray.size
     }
 
     return outputArray
 }
 
 fun join(byteArrays: Collection<ByteArray>): ByteArray {
-    val size = byteArrays map { it.size() } sumBy { it }
+    val size = byteArrays.map { it.size }.sumBy { it }
 
     var offset = 0
     var outputArray = ByteArray(size)
     for (byteArray in byteArrays) {
-        System.arraycopy(byteArray, 0, outputArray, offset, byteArray.size())
-        offset += byteArray.size()
+        System.arraycopy(byteArray, 0, outputArray, offset, byteArray.size)
+        offset += byteArray.size
     }
 
     return outputArray
@@ -55,9 +59,9 @@ fun join(byteArrays: Collection<ByteArray>): ByteArray {
 
 fun Sequence<Byte>.toByteArray(): ByteArray {
     val list = this.toArrayList()
-    val byteArray = ByteArray(list.size())
+    val byteArray = ByteArray(list.size)
 
-    for (i in 0 until list.size()) {
+    for (i in 0 until list.size) {
         byteArray[i] = list[i]
     }
 

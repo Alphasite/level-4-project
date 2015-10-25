@@ -30,4 +30,7 @@
       <module name="root" target="1.5" />
     </bytecodeTargetLevel>
   </component>
+  <component name="HaskellBuildOptions">
+    <cabalPath>/Library/Haskell/ghc-7.10.2-x86_64/bin/cabal</cabalPath>
+  </component>
 </project>

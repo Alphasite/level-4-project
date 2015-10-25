@@ -36,7 +36,7 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
                 stringLines.add(it.nextLine())
             }
 
-            for (i in 0 until stringLines.size()) {
+            for (i in 0 until stringLines.size) {
                 if (stringLines[i].length() > 0) {
                     lines.add(Line(i, stringLines[i]))
                 }
@@ -45,7 +45,7 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
 
     }
 
-    fun assemble(file: String): ByteArray {
+    fun assemble(file: String): SizedByteArray {
         this.loadFile(file)
 
         for (line in this.lines) {
@@ -56,7 +56,10 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
 
         calculateOffsets(lines)
 
-        var instructionBytes = this.lines map { annotateError(it) { it.instruction?.raw } } filter { (it?.bitSize ?: 0) > 0 }
+        var instructionBytes = this.lines
+            .map { annotateError(it) { it.instruction?.raw } }
+            .filterNotNull()
+            .filter { it.bitSize > 0 }
 
         var labels = this.lines map { it.label } filter { it != null }
 
@@ -72,7 +75,7 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
         println(labels)
         println()
 
-        return ByteArray(0) // TODO do!
+        return SizedByteArray.join(instructionBytes) // TODO do!
     }
 
     fun calculateOffsets(lines: List<Line>): List<Line> {

@@ -1,25 +1,110 @@
 package com.nishadmathur.configuration
 
-import com.esotericsoftware.yamlbeans.YamlWriter
+import com.nishadmathur.assembler.IdentifierTable
+import com.nishadmathur.errors.IncompleteDeclarationParserError
+import com.nishadmathur.errors.MalformedDeclaration
+import com.nishadmathur.errors.MissingOrMalformedSection
+import com.nishadmathur.errors.InvalidOption
+import com.nishadmathur.instructions.InstructionFactory
+import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
 import com.nishadmathur.instructions.TypedInstructionFactory
 import com.nishadmathur.references.*
-import java.io.Writer
+import org.yaml.snakeyaml.Yaml
+import java.io.Reader
+import java.util.*
 
 /**
  * User: nishad
  * Date: 14/10/2015
  * Time: 21:57
  */
-fun load(file: Writer) {
-    val writer = YamlWriter(file);
-    writer.config.setClassTag("MetaInstruction", TypePolymorphicInstructionFactory::class.java)
-    writer.config.setClassTag("TypedInstruction", TypedInstructionFactory::class.java)
+fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
+    val yaml = Yaml();
+    val config = yaml.load(file)
 
-    writer.config.setClassTag("MetaReference", MetaReferenceFactory::class.java)
-    writer.config.setClassTag("IndexedReference", IndexedReferenceFactory::class.java)
-    writer.config.setClassTag("LabelReference", LabelReferenceFactory::class.java)
-    writer.config.setClassTag("LiteralReference", LiteralReferenceFactory::class.java)
-    writer.config.setClassTag("MappedReference", MappedReferenceFactory::class.java)
+    var configuration: Configuration?
+    var instructionFactories: InstructionFactory?
+    var referenceFactories: Map<String, ReferenceFactory>?
 
+    when (config) {
+        is Map<*, *> -> {
+            val configurationMap = config.getRaw("configuration") as? Map<*, *>
+                    ?: throw IncompleteDeclarationParserError("Configuration is missing or malformed.")
+
+            configuration = parseConfiguration(configurationMap)
+
+            val referenceMap = config.getRaw("references") as? List<*>
+                    ?: throw IncompleteDeclarationParserError("Reference declaration is missing or malformed.")
+
+            referenceFactories = parseReference(referenceMap, configuration)
+
+            val instructionMap = config.getRaw("instructions") as? List<*>
+                    ?: throw IncompleteDeclarationParserError("Instruction declaration is incomplete or malformed.")
+
+            instructionFactories = parseInstructions(instructionMap, referenceFactories, configuration)
+
+        }
+
+        else ->
+            throw MalformedDeclaration("The top level declaration is malformed; it should be a map.")
+    }
+
+    configuration ?: throw MissingOrMalformedSection("Configuration is missing or malformed")
+    instructionFactories ?: throw MissingOrMalformedSection("Instruction factory is missing or malformed")
+
+    return Pair(configuration, instructionFactories)
 }
+
+class Configuration(val identiferBitSize: Int) {
+    val labelTable: IdentifierTable = IdentifierTable(identiferBitSize)
+}
+
+fun parseConfiguration(config: Map<*, *>): Configuration {
+    val bitSize = config.getRaw("label bit size") as? Int
+            ?: throw InvalidOption("label bit size", config.getRaw("label bit size"))
+
+    val configuration = Configuration(bitSize)
+
+    return configuration
+}
+
+fun parseReference(config: List<*>, configuration: Configuration): Map<String, ReferenceFactory> {
+    val references = HashMap<String, ReferenceFactory>()
+
+    for (value in config) {
+        val map = value as? Map<*, *> ?: throw MalformedDeclaration("Every child of References should be a map.")
+        val name = map.getRaw("name") as? String ?: throw MalformedDeclaration("Field name must be a non-null string.")
+        val kind = map.getRaw("kind") as? String ?: throw MalformedDeclaration("Field kind must be a non-null string.")
+
+        references[name] = when (kind) {
+            "indexed"-> IndexedReferenceFactory.parse(map, references, configuration)
+            "label"-> LabelReferenceFactory.parse(map, references, configuration)
+            "literal"-> LiteralReferenceFactory.parse(map, references, configuration)
+            "mapped"-> MappedReferenceFactory.parse(map, references, configuration)
+            else -> throw InvalidOption("kind", kind.toString())
+        }
+    }
+
+    return references
+}
+
+fun parseInstructions(config: List<*>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): InstructionFactory {
+    val instructions = MetaInstructionFactory()
+
+    for (value in config) {
+        val map = value as? Map<*, *> ?: throw MalformedDeclaration("Every child of Instructions should be a map.")
+        val kind = map.getRaw("kind") as? String ?: "instruction"
+
+        val instruction = when (kind) {
+            "meta" -> TypePolymorphicInstructionFactory.parse(map, referenceFactories, configuration)
+            "instruction" -> TypedInstructionFactory.parse(map, referenceFactories, configuration)
+            else -> throw InvalidOption("kind", kind.toString())
+        }
+
+        instructions.addInstruction(instruction)
+    }
+
+    return instructions
+}
+

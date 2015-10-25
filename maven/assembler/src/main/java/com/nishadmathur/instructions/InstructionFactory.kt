@@ -1,5 +1,7 @@
 package com.nishadmathur.instructions
 
+import java.util.*
+
 /**
  * User: nishad
  * Date: 12/10/2015
@@ -11,4 +13,8 @@ interface InstructionFactory {
     fun getInstanceIfIsMatch(name: String, arguments: List<String>, ignoreIdentifier: Boolean = false): Instruction
     val identifier: String
     val help: String
+
+    val factoryMap: Map<String, InstructionFactory>
 }
+
+

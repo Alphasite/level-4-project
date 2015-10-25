@@ -1,7 +1,6 @@
 package com.nishadmathur.instructions
 
 import com.nishadmathur.errors.InstructionParseError
-import sun.tools.jstat.Identifier
 
 /**
  * User: nishad
@@ -9,6 +8,8 @@ import sun.tools.jstat.Identifier
  * Time: 12:24
  */
 class MetaInstructionFactory: InstructionFactory {
+    override val factoryMap: Map<String, InstructionFactory>
+        get() = factories.map { it.factoryMap.entries.map { it.toPair() } }.flatten().toMap()
 
     val factories = arrayListOf<InstructionFactory>()
 

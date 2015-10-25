@@ -15,7 +15,7 @@ open class AssemblerError(message: String): Exception(message) {
         return "An error occurred while parsing line: \n\t"+
             "${line?.lineNumber} '${line?.line}' \n\n" +
             "Producing the error:\n\t" +
-            "${super.getMessage()}\n\n" +
+            "${super.message}\n\n" +
             super.toString() +
             "\n"
     }

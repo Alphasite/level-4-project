@@ -28,7 +28,7 @@ class Line(val lineNumber: Int, val line: String) {
     fun parseLine(instructionFactory: InstructionFactory, labelTable: IdentifierTable) {
         val sections = line.split(":").filter { it != "" }
 
-        if (sections.size() != 1) {
+        if (sections.size != 1) {
             throw LineParseError(
                 "Line has more than 1 segment, you can have at most 1 label or 1 instruction per line; '$sections'"
             )

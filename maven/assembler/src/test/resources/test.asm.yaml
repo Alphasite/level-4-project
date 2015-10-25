@@ -1,0 +1,90 @@
+configuration:
+  line can start with label: true
+  label bit size: 8
+
+references:
+  - name: hexadecimal
+    kind: literal
+    literal type: HEXADECIMAL
+    literal size: 8
+    validation regex: "0x\\d+"
+    extraction regex: "0x\\d+"
+
+  - name: integer
+    kind: literal
+    literal type: INTEGER
+    literal size: 8
+    validation regex: "\\d+"
+    extraction regex: "(\\d+)"
+
+  - name: register
+    kind: mapped
+    size: 4
+    mappings:
+      "r0": 0x0
+      "r1": 0x1
+      "r2": 0x2
+      "r3": 0x3
+      "r4": 0x4
+      "r5": 0x5
+      "r6": 0x6
+      "r7": 0x7
+
+  - name: label
+    kind: label
+    size: 8
+    validation regex: "^#\\w+$"
+    extraction regex: "(?<=#)\\w+"
+
+  - name: memory
+    kind: indexed
+    source first: true
+    regex: "(.*?)\\[(.*?)\\]"
+    valid left hand types:
+      - label
+    valid right hand types:
+      - integer
+
+instructions:
+  - name: load
+    kind: meta
+    instructions:
+      - name: loadr
+        byte sequence: 0x01
+        size: 8
+        arguments:
+          source: register
+          destination: register
+
+      - name: loadl
+        byte sequence: 0x02
+        size: 8
+        arguments:
+          value: integer
+          destination: register
+
+  - name: jump
+    byte sequence: 0x03
+    size: 8
+    arguments:
+      destination: memory
+
+  - name: add
+    byte sequence: 0x04
+    size: 8
+    arguments:
+      lhs: register
+      rhs: register
+      destination: register
+
+directives:
+  - name: .string
+    alias builtin: ascii
+
+  # Im really not sure how exactly to handle this, without special casing it.
+  - name: .global
+    external: python
+    file: "directives.py"
+    function: generate_global
+    arguments:
+    segments: "__SEGMENTS__"

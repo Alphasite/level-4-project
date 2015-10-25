@@ -10,18 +10,27 @@ import java.util.*
  */
 class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
 
-    constructor(bytes: Collection<Byte>) : this(bytes.asSequence().toByteArray(), bytes.size() * 8)
+    constructor(bytes: Collection<Byte>) : this(bytes.asSequence().toByteArray(), bytes.size * 8)
+
+    fun rightAlign(): SizedByteArray {
+        return SizedByteArray.join(this, SizedByteArray(ByteArray(1), 4))
+    }
 
     override fun toString(): String {
         val bytes = byteArray.withIndex()
-            .dropWhile { it.index < (byteArray.size() - Math.ceil(bitSize / 8.0).toInt()) }
-            .map { Integer.toBinaryString(it.value.toInt()).padStart(8, '0') }
-            .join(", ")
+                .dropWhile { it.index < (byteArray.size() - Math.ceil(bitSize / 8.0).toInt()) }
+                .map { Integer.toBinaryString(it.value.toInt()).padStart(8, '0') }
+                .joinToString(", ")
 
         return "[$bytes]@$bitSize"
     }
 
     companion object {
+
+        fun join(vararg byteArrays: SizedByteArray): SizedByteArray {
+            return join(byteArrays.toList())
+        }
+
         fun join(byteArrays: List<SizedByteArray>): SizedByteArray {
             var totalSize = byteArrays.map { it.bitSize } .sum()
 
@@ -32,7 +41,7 @@ class SizedByteArray(val byteArray: ByteArray, val bitSize: Int) {
             // This buffer needs to start a few bits right shifted, so that whole array is right aligned, not left.
             var currentByteBitsRead = (8 - (totalSize % 8)) % 8// i.e. XX11 0011 instead of 1100 11XX
 
-            for (i in 0 until byteArrays.size()) {
+            for (i in 0 until byteArrays.size) {
                 val byteArray = byteArrays[i].byteArray
                 val bitSize = byteArrays[i].bitSize
                 val bytesToSkip = byteArray.size() - Math.ceil(bitSize / 8.0).toInt()

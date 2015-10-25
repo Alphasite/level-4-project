@@ -13,6 +13,5 @@ interface Instruction {
     val raw: SizedByteArray
     val size: Int
     val arguments: List<Reference>
-
-    override fun toString(): String = "$raw Args:{${arguments.joinToString(", ")}}"
+    abstract override fun toString(): kotlin.String
 }

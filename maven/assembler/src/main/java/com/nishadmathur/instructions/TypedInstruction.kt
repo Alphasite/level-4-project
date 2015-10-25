@@ -23,4 +23,6 @@ class TypedInstruction(override val arguments: List<Reference>,
 
     override val size: Int
         get() = rawLiteral.bitSize + arguments.map { argument -> argument.size }.sum()
+
+    override fun toString(): String = "$raw Args:{${arguments.joinToString(", ")}}"
 }

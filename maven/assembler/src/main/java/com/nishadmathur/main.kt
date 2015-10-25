@@ -2,6 +2,8 @@ package com.nishadmathur
 
 import com.nishadmathur.assembler.Assembler
 import com.nishadmathur.assembler.IdentifierTable
+import com.nishadmathur.configuration.loadConfiguration
+import com.nishadmathur.configuration.parseConfiguration
 import com.nishadmathur.instructions.InstructionFactory
 import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
@@ -9,6 +11,11 @@ import com.nishadmathur.instructions.TypedInstructionFactory
 import com.nishadmathur.references.*
 import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.toByteArray
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
+import java.net.URI
+import java.net.URL
 
 /**
  * User: nishad
@@ -50,8 +57,9 @@ fun configure(): Pair<InstructionFactory, IdentifierTable> {
         IndexedReferenceFactory(
             "memory",
             "(.*?)\\[(.*?)\\]".toRegex(),
-            listOf(referenceFactory["label"]!!),
-            listOf(referenceFactory["register"]!!, referenceFactory["number"]!!)
+            sourceFirst = true,
+            validLeftSideReferenceTypes = listOf(referenceFactory["label"]!!),
+            validRightSideReferenceStrings = listOf(referenceFactory["register"]!!, referenceFactory["number"]!!)
         ),
         1
     )
@@ -107,9 +115,28 @@ fun configure(): Pair<InstructionFactory, IdentifierTable> {
 fun main(args: Array<String>) {
     val (instructionFactory, identifierTable) = configure()
 
-    Assembler(
+    val file1 = Assembler(
         instructionFactory = instructionFactory,
         identifierTable = identifierTable
     ).assemble("test.asm")
-}
 
+
+    println("File:")
+    println(file1.rightAlign())
+    println()
+
+    println("Config File:")
+    println()
+
+    val (configuration, instructionFactory2) = loadConfiguration(FileReader("test.asm.yaml"))
+
+    val file2 = Assembler(
+            instructionFactory = instructionFactory2,
+            identifierTable = configuration.labelTable
+    ).assemble("test.asm")
+
+    println("File:")
+    println(file2.rightAlign())
+    println()
+
+}
