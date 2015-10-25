@@ -1,6 +1,11 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.configuration.Configuration
+import com.nishadmathur.configuration.parseReference
 import com.nishadmathur.errors.DataSourceParseError
+import com.nishadmathur.errors.InvalidOption
+import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
+import com.nishadmathur.instructions.TypedInstructionFactory
 import java.io.Serializable
 import java.util.*
 
@@ -43,6 +48,28 @@ class MetaReferenceFactory(override val type: String): ReferenceFactory, Seriali
 
     operator fun get(factoryName: String): ReferenceFactory? {
         return referenceFactoriesMapping[factoryName]
+    }
+
+    companion object {
+        fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): Map<String, ReferenceFactory> {
+            val name = properties.getRaw("name") as? String
+                    ?: throw InvalidOption("name", properties)
+
+            val references = (properties.getRaw("references") as? List<*>)
+                    ?.map { it as? Map<*, *> }
+                    ?.requireNoNulls()
+                    ?: throw InvalidOption("references", properties)
+
+            val meta = MetaReferenceFactory(name)
+            val newReferenceFactories = parseReference(references, configuration) as MutableMap
+
+            newReferenceFactories.values.mapIndexed { i, factory -> meta.addReference(factory, i)}
+
+            newReferenceFactories[name] = meta
+            newReferenceFactories.putAll(newReferenceFactories)
+
+            return newReferenceFactories
+        }
     }
 }
 

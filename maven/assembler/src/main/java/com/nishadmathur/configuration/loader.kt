@@ -77,11 +77,12 @@ fun parseReference(config: List<*>, configuration: Configuration): Map<String, R
         val name = map.getRaw("name") as? String ?: throw MalformedDeclaration("Field name must be a non-null string.")
         val kind = map.getRaw("kind") as? String ?: throw MalformedDeclaration("Field kind must be a non-null string.")
 
-        references[name] = when (kind) {
-            "indexed"-> IndexedReferenceFactory.parse(map, references, configuration)
-            "label"-> LabelReferenceFactory.parse(map, references, configuration)
-            "literal"-> LiteralReferenceFactory.parse(map, references, configuration)
-            "mapped"-> MappedReferenceFactory.parse(map, references, configuration)
+        when (kind) {
+            "meta"-> references.putAll(MetaReferenceFactory.parse(map, references, configuration))
+            "indexed"-> references[name] = IndexedReferenceFactory.parse(map, references, configuration)
+            "label"-> references[name] = LabelReferenceFactory.parse(map, references, configuration)
+            "literal"-> references[name] = LiteralReferenceFactory.parse(map, references, configuration)
+            "mapped"-> references[name] = MappedReferenceFactory.parse(map, references, configuration)
             else -> throw InvalidOption("kind", kind.toString())
         }
     }

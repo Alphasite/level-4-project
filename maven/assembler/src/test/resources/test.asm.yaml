@@ -3,19 +3,22 @@ configuration:
   label bit size: 8
 
 references:
-  - name: hexadecimal
-    kind: literal
-    literal type: HEXADECIMAL
-    literal size: 8
-    validation regex: "0x\\d+"
-    extraction regex: "0x\\d+"
+  - name: literal
+    kind: meta
+    references:
+      - name: hexadecimal
+        kind: literal
+        literal type: HEXADECIMAL
+        literal size: 8
+        validation regex: "0x\\d+"
+        extraction regex: "0x(\\d+)"
 
-  - name: integer
-    kind: literal
-    literal type: INTEGER
-    literal size: 8
-    validation regex: "\\d+"
-    extraction regex: "(\\d+)"
+      - name: integer
+        kind: literal
+        literal type: INTEGER
+        literal size: 8
+        validation regex: "\\d+"
+        extraction regex: "(\\d+)"
 
   - name: register
     kind: mapped
@@ -43,7 +46,7 @@ references:
     valid left hand types:
       - label
     valid right hand types:
-      - integer
+      - literal
 
 instructions:
   - name: load
