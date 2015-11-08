@@ -1,6 +1,8 @@
 configuration:
   line can start with label: true
   label bit size: 8
+  label regex: "(\\w+):"
+  argument separator: " "
 
 references:
   - name: literal

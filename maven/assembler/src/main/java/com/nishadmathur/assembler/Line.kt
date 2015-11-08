@@ -1,5 +1,6 @@
 package com.nishadmathur.assembler
 
+import com.nishadmathur.configuration.Configuration
 import com.nishadmathur.errors.LineParseError
 import com.nishadmathur.instructions.Instruction
 import com.nishadmathur.instructions.InstructionFactory
@@ -12,6 +13,7 @@ import com.nishadmathur.util.SizedByteArray
  */
 class Line(val lineNumber: Int, val line: String) {
 
+    var comment: String? = null
     var label: Label? = null
     var instruction: Instruction? = null
 
@@ -25,27 +27,39 @@ class Line(val lineNumber: Int, val line: String) {
     val size: Int
         get() = this.instruction?.size ?: 0
 
-    fun parseLine(instructionFactory: InstructionFactory, labelTable: IdentifierTable) {
-        val sections = line.split(":").filter { it != "" }
+    fun parseLine(configuration: Configuration, instructionFactory: InstructionFactory, labelTable: IdentifierTable) {
 
-        if (sections.size != 1) {
-            throw LineParseError(
-                "Line has more than 1 segment, you can have at most 1 label or 1 instruction per line; '$sections'"
-            )
+        comment = configuration.commentRegex.find(line)?.value
+        var body = configuration.commentRegex.replace(line, "")
+
+        val label = configuration.labelRegex.find(body)?.value
+        body = configuration.labelRegex.replace(body, "")
+
+        val arguments = body.split(configuration.labelRegex).filter { it.length > 0 }
+
+        if (label == null && arguments.size == 0 && comment == null) {
+            throw LineParseError("Line isn't formatted correctly; $line")
         }
 
-        if (line.matches("\\w+:$".toRegex())) {
-            val label = line.trim(' ', '\n', '\r', ':')
+        if (label != null) {
+            this.label = Label(label.trim(' ', '\n', '\r'), labelTable)
+        }
 
-            if (!label.matches("^\\w+$".toRegex())) {
-                throw LineParseError("The label has no text or contains non text characters; '$label'")
+        if (arguments.size > 0) {
+            val instructionSection = arguments[0].trim()
+
+            val name = instructionSection.substringBefore(" ")
+
+            val instructionSegments = instructionSection.substringAfter(" ")
+                    .split(configuration.argumentSeparator)
+                    .map { it.trim() }
+                    .filter { it.length > 0 }
+
+            if (instructionSegments.size > 0) {
+                this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)
+            } else {
+                throw LineParseError("Error parsing the instruction segment of line: '$line'")
             }
-
-            this.label = Label(label, labelTable)
-
-        } else {
-            val instructionSegments = this.line.split(" ").filter { it.length() > 0 }
-            this.instruction = instructionFactory.getInstanceIfIsMatch(instructionSegments[0], instructionSegments.drop(1))
         }
     }
 

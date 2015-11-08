@@ -13,6 +13,7 @@ import com.nishadmathur.references.*
 import org.yaml.snakeyaml.Yaml
 import java.io.Reader
 import java.util.*
+import kotlin.text.Regex
 
 /**
  * User: nishad
@@ -56,15 +57,26 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
     return Pair(configuration, instructionFactories)
 }
 
-class Configuration(val identiferBitSize: Int) {
-    val labelTable: IdentifierTable = IdentifierTable(identiferBitSize)
+class Configuration(val identifierBitSize: Int,
+                    val argumentSeparator: Regex,
+                    val labelRegex: Regex,
+                    val commentRegex: Regex) {
+    val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
 }
 
 fun parseConfiguration(config: Map<*, *>): Configuration {
     val bitSize = config.getRaw("label bit size") as? Int
             ?: throw InvalidOption("label bit size", config.getRaw("label bit size"))
 
-    val configuration = Configuration(bitSize)
+    val argumentSeparator = (config.getRaw("argument separator") as? String ?: " ").toRegex()
+
+    val labelRegex = (config.getRaw("label regex") as? String)?.toRegex()
+            ?: throw InvalidOption("label regex", config)
+
+    val commentRegex = (config.getRaw("comment regex") as? String)?.toRegex()
+            ?: throw InvalidOption("comment regex", config)
+
+    val configuration = Configuration(bitSize, argumentSeparator, labelRegex, commentRegex)
 
     return configuration
 }

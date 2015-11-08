@@ -16,7 +16,7 @@ class LabelReference(val label: String, val labelTable: IdentifierTable, overrid
     // Size must be <32bits
     // Its an easy limitation to change but it doest seem to be an issue atm.
     override val raw: SizedByteArray
-        get() = labelTable[label]?.raw ?: throw UndeclaredLabelError("Label $label is used but never defined.")
+        get() = labelTable[label]?.raw ?: throw UndeclaredLabelError("Label '$label' is used but never defined.")
 
     override fun toString(): String = "$label#$raw"
 }

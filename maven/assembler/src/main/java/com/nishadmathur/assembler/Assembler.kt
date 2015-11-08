@@ -1,5 +1,6 @@
 package com.nishadmathur.assembler
 
+import com.nishadmathur.configuration.Configuration
 import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.errors.LineParseError
 import com.nishadmathur.instructions.Instruction
@@ -23,7 +24,7 @@ import java.util.stream.IntStream
  * Date: 12/10/2015
  * Time: 09:08
  */
-class Assembler(val instructionFactory: InstructionFactory, val identifierTable: IdentifierTable) {
+class Assembler(val configuration: Configuration, val instructionFactory: InstructionFactory, val identifierTable: IdentifierTable) {
     val lines = ArrayList<Line>()
     val word_size = 32
 
@@ -37,7 +38,7 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
             }
 
             for (i in 0 until stringLines.size) {
-                if (stringLines[i].length() > 0) {
+                if (stringLines[i].length > 0) {
                     lines.add(Line(i, stringLines[i]))
                 }
             }
@@ -50,7 +51,7 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
 
         for (line in this.lines) {
             annotateError(line) {
-                line.parseLine(instructionFactory = instructionFactory, labelTable = identifierTable)
+                line.parseLine(instructionFactory = instructionFactory, labelTable = identifierTable, configuration = configuration)
             }
         }
 
@@ -61,7 +62,7 @@ class Assembler(val instructionFactory: InstructionFactory, val identifierTable:
             .filterNotNull()
             .filter { it.bitSize > 0 }
 
-        var labels = this.lines map { it.label } filter { it != null }
+        var labels = this.lines.map { it.label }.filter { it != null }
 
         println("Instructions:")
         lines.forEach { println(it) }

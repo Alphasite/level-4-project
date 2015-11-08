@@ -18,7 +18,8 @@ import java.lang.Long
  */
 class TypedInstructionFactory(override val identifier: String,
                               val argumentFactories: List<Pair<String, ReferenceFactory>>,
-                              val rawLiteral: SizedByteArray) : InstructionFactory, Serializable {
+                              val rawLiteral: SizedByteArray,
+                              val paddingBits: Int) : InstructionFactory, Serializable {
 
     override val help: String
         get() = identifier + " " + argumentFactories.map { argument -> "<${argument.first}:${argument.second.type}>" }.joinToString(" ")
@@ -48,7 +49,7 @@ class TypedInstructionFactory(override val identifier: String,
                 }
             }
 
-            return TypedInstruction(argumentReferences, rawLiteral)
+            return TypedInstruction(argumentReferences, rawLiteral, paddingBits)
         } else {
             throw InstructionParseError("$identifier with arguments '${arguments.joinToString("', '")}' could not be parsed correctly, it should be in the form '$help'")
         }
@@ -60,7 +61,7 @@ class TypedInstructionFactory(override val identifier: String,
                            configuration: Configuration): InstructionFactory {
 
             val name = properties.getRaw("name") as? String
-                    ?: throw InvalidOption("name", properties.getRaw("name"))
+                    ?: throw InvalidOption("name", properties)
 
             val rawByteSequence = properties.getRaw("byte sequence")
             val byteSequence = when (rawByteSequence) {
@@ -69,8 +70,18 @@ class TypedInstructionFactory(override val identifier: String,
                 else -> throw InvalidOption("byte sequence", rawByteSequence)
             }
 
-            val literalSize = properties.getRaw("size") as Int?
+            val literalSize = properties.getRaw("size") as? Int
                     ?: throw InvalidOption("size", properties.getRaw("size"))
+
+
+            val paddingBits: Int
+            if (properties.containsKeyRaw("padding bits")) {
+                paddingBits = properties.getRaw("padding bits") as? Int
+                        ?: throw InvalidOption("padding bits", properties)
+            } else {
+                paddingBits = 0
+            }
+
 
             val rawArguments = properties.getRaw("arguments") as? Map<*, *>
                     ?: throw InvalidOption("arguments", properties.getRaw("arguments"))
@@ -86,7 +97,8 @@ class TypedInstructionFactory(override val identifier: String,
             return TypedInstructionFactory(
                     name,
                     arguments,
-                    SizedByteArray(byteSequence, literalSize)
+                    SizedByteArray(byteSequence, literalSize),
+                    paddingBits
             )
         }
     }

@@ -1,0 +1,246 @@
+configuration:
+  line can start with label: true
+  label bit size: 16
+  label regex: "^(\\w+)"
+  argument separator: ",\\s*"
+  comment regex: ";.*"
+
+references:
+  - name: literal4
+    kind: meta
+    references:
+      - name: hexadecimal
+        kind: literal
+        literal type: HEXADECIMAL
+        literal size: 4
+        validation regex: "0x\\d+"
+        extraction regex: "0x(\\d+)"
+
+      - name: int4
+        kind: literal
+        literal type: INTEGER
+        literal size: 4
+        validation regex: "\\d+"
+        extraction regex: "(\\d+)"
+
+  - name: literal16
+    kind: meta
+    references:
+      - name: hexadecimal
+        kind: literal
+        literal type: HEXADECIMAL
+        literal size: 16
+        validation regex: "0x\\d+"
+        extraction regex: "0x(\\d+)"
+
+      - name: int4
+        kind: literal
+        literal type: INTEGER
+        literal size: 16
+        validation regex: "(\\+|-)?\\d+"
+        extraction regex: "((\\+|-)?\\d+)"
+
+  - name: register
+    kind: mapped
+    size: 4
+    mappings:
+      "R0": 0x0
+      "R1": 0x1
+      "R2": 0x2
+      "R3": 0x3
+      "R4": 0x4
+      "R5": 0x5
+      "R6": 0x6
+      "R7": 0x7
+      "R8": 0x8
+      "R9": 0x9
+      "R10": 0xA
+      "R11": 0xB
+      "R12": 0xC
+      "R13": 0xD
+      "R14": 0xE
+      "R15": 0xF
+
+  - name: label
+    kind: label
+    size: 16
+    validation regex: "^\\w+$"
+    extraction regex: "\\w+"
+
+  - name: memory
+    kind: indexed
+    source first: true
+    regex: "(.*?)\\[(.*?)\\]"
+    valid left hand types:
+      - literal4
+      - label
+    valid right hand types:
+      - register
+
+instructions:
+
+  - name: add
+    byte sequence: 0x00
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: sub
+    byte sequence: 0x01
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: mul
+    byte sequence: 0x02
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: div
+    byte sequence: 0x03
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: cmplt
+    byte sequence: 0x04
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: cmpeq
+    byte sequence: 0x05
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: cmpgt
+    byte sequence: 0x06
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: inv
+    byte sequence: 0x07
+    size: 4
+    arguments:
+      destination: register
+      word: register
+      ignored: register
+
+  - name: and
+    byte sequence: 0x08
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: or
+    byte sequence: 0x09
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: xor
+    byte sequence: 0x0A
+    size: 4
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+
+  - name: shiftl
+    byte sequence: 0x0B
+    size: 4
+    arguments:
+      destination: register
+      word: register
+      bits: register
+
+  - name: shiftr
+    byte sequence: 0x0C
+    size: 4
+    arguments:
+      destination: register
+      word: register
+      bits: register
+
+  - name: trap
+    byte sequence: 0x0D
+    size: 4
+    arguments:
+      arg1: register
+      arg2: register
+      arg3: register
+
+  - name: lea
+    byte sequence: 0xF0
+    size: 8
+    arguments:
+      destination: register
+      lhs: memory
+
+  - name: load
+    byte sequence: 0xF1
+    size: 8
+    arguments:
+      destination: register
+      lhs: memory
+
+  - name: store
+    byte sequence: 0xF2
+    size: 8
+    arguments:
+      destination: register
+      lhs: memory
+
+  - name: jump
+    byte sequence: 0xF3
+    size: 8
+    arguments:
+      address: memory
+
+  - name: jumpf
+    byte sequence: 0xF4
+    size: 8
+    arguments:
+      conditional: register
+      address: memory
+
+  - name: jumpt
+    byte sequence: 0xF5
+    size: 8
+    arguments:
+      conditional: register
+      address: memory
+
+  - name: jal
+    byte sequence: 0xF6
+    size: 8
+    arguments:
+      source address: register
+      address: memory
+
+  - name: data
+    byte sequence: 0x0
+    size: 0
+    arguments:
+      value: literal16

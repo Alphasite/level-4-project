@@ -11,18 +11,20 @@ import java.util.*
  * Time: 09:08
  */
 class TypedInstruction(override val arguments: List<Reference>,
-                       val rawLiteral: SizedByteArray) : Instruction {
+                       val rawLiteral: SizedByteArray,
+                       val paddingBits: Int) : Instruction {
 
     override val raw: SizedByteArray
         get() {
             val bytes = arrayListOf(rawLiteral)
             bytes.addAll(arguments.map { argument -> argument.raw })
+            bytes.add(SizedByteArray(ByteArray(Math.ceil(paddingBits / 1.0).toInt()), paddingBits))
 
             return SizedByteArray.join(bytes)
         }
 
     override val size: Int
-        get() = rawLiteral.bitSize + arguments.map { argument -> argument.size }.sum()
+        get() = rawLiteral.bitSize + arguments.map { argument -> argument.size }.sum() + paddingBits
 
     override fun toString(): String = "$raw Args:{${arguments.joinToString(", ")}}"
 }
