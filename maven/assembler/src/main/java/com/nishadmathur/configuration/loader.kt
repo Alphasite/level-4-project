@@ -60,13 +60,17 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
 class Configuration(val identifierBitSize: Int,
                     val argumentSeparator: Regex,
                     val labelRegex: Regex,
-                    val commentRegex: Regex) {
+                    val commentRegex: Regex,
+                    val wordSizeBits: Int) {
     val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
 }
 
 fun parseConfiguration(config: Map<*, *>): Configuration {
     val bitSize = config.getRaw("label bit size") as? Int
-            ?: throw InvalidOption("label bit size", config.getRaw("label bit size"))
+            ?: throw InvalidOption("label bit size", config)
+
+    val wordSize = config.getRaw("word size") as? Int
+            ?: throw InvalidOption("word size", config)
 
     val argumentSeparator = (config.getRaw("argument separator") as? String ?: " ").toRegex()
 
@@ -76,7 +80,7 @@ fun parseConfiguration(config: Map<*, *>): Configuration {
     val commentRegex = (config.getRaw("comment regex") as? String)?.toRegex()
             ?: throw InvalidOption("comment regex", config)
 
-    val configuration = Configuration(bitSize, argumentSeparator, labelRegex, commentRegex)
+    val configuration = Configuration(bitSize, argumentSeparator, labelRegex, commentRegex, wordSize)
 
     return configuration
 }

@@ -1,5 +1,6 @@
 package com.nishadmathur.instructions
 
+import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.references.Reference
 import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.join
@@ -10,21 +11,39 @@ import java.util.*
  * Date: 05/10/2015
  * Time: 09:08
  */
-class TypedInstruction(override val arguments: List<Reference>,
-                       val rawLiteral: SizedByteArray,
-                       val paddingBits: Int) : Instruction {
+class TypedInstruction (
+        override val arguments: Map<String, Reference>,
+        var rawStructure: List<RawStructureLiteral>
+) : Instruction {
 
     override val raw: SizedByteArray
         get() {
-            val bytes = arrayListOf(rawLiteral)
-            bytes.addAll(arguments.map { argument -> argument.raw })
-            bytes.add(SizedByteArray(ByteArray(Math.ceil(paddingBits / 1.0).toInt()), paddingBits))
+            val bytes = ArrayList<SizedByteArray>()
+
+            bytes.addAll(rawStructure.map {
+                when (it) {
+                    is RawStructureLiteral.literal -> it.literal
+                    is RawStructureLiteral.path -> {
+                        val segments = it.path.split('.', limit = 2)
+                        when (segments.size) {
+                            2 -> arguments[segments[0]]?.resolvePath(segments[1])
+                            1 -> arguments[segments[0]]?.raw
+                            else -> null
+                        } ?: throw PathResolutionError(it.path)
+                    }
+                }
+            })
 
             return SizedByteArray.join(bytes)
         }
 
     override val size: Int
-        get() = rawLiteral.bitSize + arguments.map { argument -> argument.size }.sum() + paddingBits
+        get() = raw.bitSize
 
-    override fun toString(): String = "$raw Args:{${arguments.joinToString(", ")}}"
+    override fun toString(): String = "$raw Args:{${arguments.values.joinToString(", ")}}"
+}
+
+sealed class RawStructureLiteral {
+    class literal(val literal: SizedByteArray): RawStructureLiteral()
+    class path(val path: String): RawStructureLiteral()
 }

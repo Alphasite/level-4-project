@@ -11,5 +11,7 @@ interface Reference {
     val raw: SizedByteArray
     val size: Int
 
+    fun resolvePath(path: String): SizedByteArray
+
     override fun toString(): String
 }

@@ -1,5 +1,6 @@
 package com.nishadmathur.assembler
 
+import com.nishadmathur.errors.UndeclaredLabelError
 import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.toByteArray
 
@@ -13,7 +14,7 @@ class Label(val identifier: String, val identifierTable: IdentifierTable) {
 
     val raw: SizedByteArray
         get() {
-            return offset ?: SizedByteArray(0.toByteArray(), 0)
+            return offset ?: throw UndeclaredLabelError(identifier)
         }
 
     init {

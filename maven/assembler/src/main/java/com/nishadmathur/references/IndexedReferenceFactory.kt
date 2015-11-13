@@ -13,7 +13,7 @@ import kotlin.text.Regex
  */
 class IndexedReferenceFactory(override val type: String,
                               val memoryRegex: Regex,
-                              val sourceFirst: Boolean,
+                              val sourceBeforeOffset: Boolean,
                               val validLeftSideReferenceTypes: List<ReferenceFactory>,
                               val validRightSideReferenceStrings: List<ReferenceFactory>): ReferenceFactory, Serializable {
 
@@ -68,7 +68,7 @@ class IndexedReferenceFactory(override val type: String,
                 throw DataSourceParseError("Memory data sources cannot be nested")
             }
 
-            return IndexedReference(sourceAddress, offsetAddress, sourceFirst)
+            return IndexedReference(sourceAddress, offsetAddress, sourceBeforeOffset)
         } else {
             throw DataSourceParseError("Error extracting memory reference from $reference")
         }
@@ -82,7 +82,7 @@ class IndexedReferenceFactory(override val type: String,
             val memoryRegex: Regex = (properties.getRaw("regex") as? String)?.toRegex()
                     ?: throw InvalidOption("regex", properties.getRaw("regex"))
 
-            val sourceFirst: Boolean = properties.getRaw("source first") as? Boolean
+            val sourceBeforeOffset: Boolean = properties.getRaw("source before offset") as? Boolean
                     ?: false
 
             val validLeftSideReferenceTypes: List<ReferenceFactory> = (properties.getRaw("valid left hand types") as? List<*>)
@@ -100,7 +100,7 @@ class IndexedReferenceFactory(override val type: String,
             return IndexedReferenceFactory(
                     type,
                     memoryRegex,
-                    sourceFirst,
+                    sourceBeforeOffset,
                     validLeftSideReferenceTypes,
                     validRightSideReferenceStrings
             )

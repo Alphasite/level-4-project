@@ -18,8 +18,7 @@ import java.lang.Long
  */
 class TypedInstructionFactory(override val identifier: String,
                               val argumentFactories: List<Pair<String, ReferenceFactory>>,
-                              val rawLiteral: SizedByteArray,
-                              val paddingBits: Int) : InstructionFactory, Serializable {
+                              var rawStructure: List<RawStructureLiteral>) : InstructionFactory, Serializable {
 
     override val help: String
         get() = identifier + " " + argumentFactories.map { argument -> "<${argument.first}:${argument.second.type}>" }.joinToString(" ")
@@ -43,13 +42,14 @@ class TypedInstructionFactory(override val identifier: String,
 
             val argumentReferences = (0 until argumentFactories.size).map { i ->
                 if (argumentFactories[i].second.checkIsMatch(arguments[i])) {
-                    argumentFactories[i].second.getInstanceIfIsMatch(arguments[i])
+                    val reference = argumentFactories[i].second.getInstanceIfIsMatch(arguments[i])
+                    Pair(argumentFactories[i].first, reference)
                 } else {
                     throw IncorrectTypeError("${argumentFactories[i].first} expects its arguments in the form $help")
                 }
-            }
+            }.toMap()
 
-            return TypedInstruction(argumentReferences, rawLiteral, paddingBits)
+            return TypedInstruction(argumentReferences, rawStructure)
         } else {
             throw InstructionParseError("$identifier with arguments '${arguments.joinToString("', '")}' could not be parsed correctly, it should be in the form '$help'")
         }
@@ -64,24 +64,8 @@ class TypedInstructionFactory(override val identifier: String,
                     ?: throw InvalidOption("name", properties)
 
             val rawByteSequence = properties.getRaw("byte sequence")
-            val byteSequence = when (rawByteSequence) {
-                is String -> Long.decode(rawByteSequence).toByteArray()
-                is Number -> rawByteSequence.toLong().toByteArray()
-                else -> throw InvalidOption("byte sequence", rawByteSequence)
-            }
-
-            val literalSize = properties.getRaw("size") as? Int
-                    ?: throw InvalidOption("size", properties.getRaw("size"))
-
-
-            val paddingBits: Int
-            if (properties.containsKeyRaw("padding bits")) {
-                paddingBits = properties.getRaw("padding bits") as? Int
-                        ?: throw InvalidOption("padding bits", properties)
-            } else {
-                paddingBits = 0
-            }
-
+                    ?: throw InvalidOption("byte sequence", properties)
+            val rawStructureLiterals: List<RawStructureLiteral>
 
             val rawArguments = properties.getRaw("arguments") as? Map<*, *>
                     ?: throw InvalidOption("arguments", properties.getRaw("arguments"))
@@ -94,12 +78,59 @@ class TypedInstructionFactory(override val identifier: String,
                         Pair(referenceName, factory)
                     }
 
+            val literalSize = properties.getRaw("size") as? Int
+            if (literalSize != null) {
+                if (rawByteSequence is Map<*, *>) {
+                    throw InvalidOption("byte sequence", properties)
+                }
+
+                rawStructureLiterals = listOf(
+                        RawStructureLiteral.literal(SizedByteArray(parseNumber(rawByteSequence), literalSize)),
+                        *arguments.map { RawStructureLiteral.path(it.first) }.toTypedArray()
+                )
+            } else {
+                val structureLiterals = (rawByteSequence as? List<*>)
+                        ?.map { it as? Map<*, *> }
+                        ?.requireNoNulls()
+                        ?.map {
+                            it.entries.map { entry ->
+                                Pair(
+                                        entry.key as? String
+                                                ?: throw InvalidOption(entry.key.toString(), it),
+                                        entry.value as? String ?: entry.value as? Number
+                                                ?: throw InvalidOption(entry.key as String, it)
+                                )
+                            }.toMap()
+                        }
+                        ?: throw InvalidOption("byte sequence", rawByteSequence)
+
+                rawStructureLiterals = structureLiterals.map {
+                    if ("path" in it) {
+                        val path = it["path"] as? String
+                                ?: throw InvalidOption("path", it)
+                        RawStructureLiteral.path(path)
+                    } else {
+                        val literal = parseNumber(it["literal"]!!)
+                        val size = (it["size"] as? Number)?.toInt()
+                            ?: throw InvalidOption("size", it)
+                        RawStructureLiteral.literal(SizedByteArray(literal, size))
+                    }
+                }
+            }
+
             return TypedInstructionFactory(
                     name,
                     arguments,
-                    SizedByteArray(byteSequence, literalSize),
-                    paddingBits
+                    rawStructureLiterals
             )
+        }
+
+        fun parseNumber(rawByteSequence: Any): ByteArray {
+            return when (rawByteSequence) {
+                is String -> Long.decode(rawByteSequence).toByteArray()
+                is Number -> rawByteSequence.toLong().toByteArray()
+                else -> throw InvalidOption("byte sequence", rawByteSequence)
+            }
         }
     }
 }

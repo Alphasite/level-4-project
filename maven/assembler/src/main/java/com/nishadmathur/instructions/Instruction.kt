@@ -12,6 +12,6 @@ import java.util.*
 interface Instruction {
     val raw: SizedByteArray
     val size: Int
-    val arguments: List<Reference>
-    abstract override fun toString(): kotlin.String
+    val arguments: Map<String, Reference>
+    override fun toString(): kotlin.String
 }

@@ -2,6 +2,7 @@ package com.nishadmathur.references
 
 import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.toByteArray
+import java.math.BigInteger
 
 /**
  * User: nishad
@@ -11,19 +12,20 @@ import com.nishadmathur.util.toByteArray
 enum class LiteralType {
     BINARY {
         override fun convertValue(value: String, size: Int): SizedByteArray {
-            return SizedByteArray(ByteArray(0), size)
+            return SizedByteArray(BigInteger(value, 2).toByteArray(), size)
         }
     },
 
     HEXADECIMAL {
         override fun convertValue(value: String, size: Int): SizedByteArray {
-            return SizedByteArray(ByteArray(0), size)
+            val hexString = value[2, value.length].toString()
+            return SizedByteArray(BigInteger(hexString, 16).toByteArray(), size)
         }
     },
 
     INTEGER {
         override fun convertValue(value: String, size: Int): SizedByteArray {
-            return SizedByteArray(value.toInt().toByteArray(), size)
+            return SizedByteArray(BigInteger(value).toByteArray(), size)
         }
     };
 

@@ -85,9 +85,9 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
 
         for (line in lines) {
             annotateError(line) {
-                line.offset = SizedByteArray(offset.toByteArray(), 8)
+                line.offset = SizedByteArray(offset.toByteArray(), configuration.identifierBitSize)
                 offsetLines.add(line)
-                offset += line.size / 8 // Size is bit size not byte size.
+                offset += line.size / configuration.wordSizeBits // Size is bit size not byte size.
             }
         }
 
