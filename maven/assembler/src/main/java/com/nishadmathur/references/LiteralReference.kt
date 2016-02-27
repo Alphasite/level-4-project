@@ -2,7 +2,6 @@ package com.nishadmathur.references
 
 import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.util.SizedByteArray
-import java.util.*
 
 /**
  * User: nishad
@@ -14,7 +13,11 @@ class LiteralReference(override val raw: SizedByteArray) : Reference {
         get() = raw.bitSize
 
     override fun resolvePath(path: String): SizedByteArray {
-        return if (path == "") { this.raw } else { throw PathResolutionError(path) }
+        return if (path == "") {
+            this.raw
+        } else {
+            throw PathResolutionError(path)
+        }
     }
 
     override fun toString(): String = "$raw"

@@ -1,0 +1,1037 @@
+configuration:
+  line can start with label: true
+  label bit size: 16
+  word size: 16
+  label regex: "^(\\w+)"
+  argument separator: ",\\s*"
+  comment regex: ";.*"
+
+references:
+  - name: literal4
+    kind: meta
+    references:
+      - name: hexadecimal
+        kind: literal
+        literal type: HEXADECIMAL
+        literal size: 4
+        validation regex: "0x\\d+"
+        extraction regex: "0x(\\d+)"
+
+      - name: int4
+        kind: literal
+        literal type: INTEGER
+        literal size: 4
+        validation regex: "\\d+"
+        extraction regex: "(\\d+)"
+
+  - name: literal16
+    kind: meta
+    references:
+      - name: hexadecimal
+        kind: literal
+        literal type: HEXADECIMAL
+        literal size: 16
+        validation regex: "0x\\d+"
+        extraction regex: "0x(\\d+)"
+
+      - name: int4
+        kind: literal
+        literal type: INTEGER
+        literal size: 16
+        validation regex: "(\\+|-)?\\d+"
+        extraction regex: "((\\+|-)?\\d+)"
+
+  - name: register
+    kind: meta
+    references:
+      - name: general purpose register
+        kind: mapped
+        size: 5
+        range:
+          format string: "[R|r]{0}"
+          start index: 0
+          start literal: 0
+          count: 31
+      - name: zero register
+        kind: mapped
+        size: 5
+        mappings:
+          "R0": 0x0
+          "r0": 0x0
+
+  - name: label
+    kind: label
+    size: 16
+    validation regex: "^\\w+$"
+    extraction regex: "\\w+"
+
+  - name: memory
+    kind: indexed
+    source before offset: true
+    regex: "(.*?)\\((.*?)\\)"
+    valid left hand types:
+      - literal16
+#      - label # TODO fix this.
+    valid right hand types:
+      - register
+
+  - name: register or literal
+    kind: meta
+    references:
+      - register
+      - literal
+
+instructions:
+  - name: add
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x20
+        size: 6
+
+  - name: addu
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x21
+        size: 6
+
+  - name: sub
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x22
+        size: 6
+
+  - name: subu
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x23
+        size: 6
+
+  - name: addi
+    arguments:
+      destination: register
+      lhs: register
+      rhs: literal
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+  - name: addiu
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register or literal
+    byte sequence:
+      - literal: 0x9
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+  - name: mult
+    arguments:
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x18
+        size: 6
+
+  - name: multu
+    arguments:
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x19
+        size: 6
+
+  - name: div
+    arguments:
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x19
+        size: 6
+
+  - name: divu
+    arguments:
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - path: rhs
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x19
+        size: 6
+
+ # ---------------------------------------------------------------------------
+ # Data Transfer
+ # ---------------------------------------------------------------------------
+
+  # Store
+
+  - name: lw
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x23
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  - name: lh
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x21
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+
+  - name: lhu
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x25
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+
+  - name: lb
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x20
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  - name: lbu
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x24
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  - name: lwcz
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x3z
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  - name: lwl
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x22
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  - name: lwr
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x26
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  # Store
+
+  - name: sw
+    arguments:
+      value: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x2b
+        size: 6
+      - path: offset
+      - path: value
+      - path: address
+
+  - name: sh
+    arguments:
+      value: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x29
+        size: 6
+      - path: offset
+      - path: value
+      - path: address
+
+  - name: sb
+    arguments:
+      value: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x28
+        size: 6
+      - path: offset
+      - path: value
+      - path: address
+
+  - name: swcz
+    arguments:
+      value: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x2b
+        size: 6
+      - path: offset
+      - path: value
+      - path: address
+
+  - name: swl
+    arguments:
+      value: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x2a
+        size: 6
+      - path: offset
+      - path: value
+      - path: address
+
+  - name: swcz
+    arguments:
+      value: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0x2e
+        size: 6
+      - path: offset
+      - path: value
+      - path: address
+
+  # Constant manipluation
+
+  - name: lui
+    arguments:
+      destination: register
+      offset: register
+      address: literal
+    byte sequence:
+      - literal: 0xf
+        size: 6
+      - path: offset
+      - path: destination
+      - path: address
+
+  # Data movement
+
+  - name: mfhi
+    arguments:
+      destination: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x10
+        size: 6
+
+  - name: mflo
+    arguments:
+      destination: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x12
+        size: 6
+
+  - name: mthi
+    arguments:
+      destination: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x11
+        size: 6
+
+  - name: mtlo
+    arguments:
+      destination: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x13
+        size: 6
+
+  - name: mfcz
+    arguments:
+      coprocessor: register
+      control: register
+    byte sequence:
+      - literal: 0x1z
+        size: 6
+      - literal: 0x0
+        size: 5
+      - path: coprocessor
+      - path: control
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 6
+
+  - name: mfcz
+    arguments:
+      control: register
+      coprocessor: register
+    byte sequence:
+      - literal: 0x1z
+        size: 6
+      - literal: 0x4
+        size: 5
+      - path: coprocessor
+      - path: control
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 6
+ # ---------------------------------------------------------------------------
+ # Logical
+ # ---------------------------------------------------------------------------
+
+  - name: and
+    arguments:
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x24
+        size: 6
+
+  - name: andi
+    arguments:
+      destination: register
+      lhs: register
+      rhs: literal
+    byte sequence:
+      - literal: 0xC
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+  - name: or
+    arguments:
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x25
+        size: 6
+
+  - name: ori
+    arguments:
+      destination: register
+      lhs: register
+      rhs: literal
+    byte sequence:
+      - literal: 0xD
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+  - name: xor
+    arguments:
+     destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x26
+        size: 6
+
+  - name: xori
+    arguments:
+      destination: register
+      lhs: register
+      rhs: literal
+    byte sequence:
+      - literal: 0xE
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+  - name: nor
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x27
+        size: 6
+
+  # Comparasin instructions
+
+  - name: slt
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x2A
+        size: 6
+
+  - name: sltu
+    arguments:
+      destination: register
+      lhs: register
+      rhs: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      - literal: 0x0
+        size: 5
+      - literal: 0x2B
+        size: 6
+
+  - name: slti
+    arguments:
+      destination: register
+      lhs: register
+      rhs: literal
+    byte sequence:
+      - literal: 0xA
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+  # check this, https://fenix.tecnico.ulisboa.pt/downloadFile/3779576281986/MIPS%20R2000%20Assembler.pdf
+  # That doc is wrong for this instruction.
+  - name: sltiu
+    arguments:
+      destination: register
+      lhs: register
+      rhs: literal
+    byte sequence:
+      - literal: 0xB
+        size: 6
+      - path: lhs
+      - path: destination
+      - path: rhs
+
+ # ---------------------------------------------------------------------------
+ # Bitwise Shift
+ # ---------------------------------------------------------------------------
+
+- name: sll
+    arguments:
+      destination: register
+      lhs: register
+      shamt: literal
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - path: shamt
+      - literal: 0x0
+        size: 6
+
+  - name: srl
+    arguments:
+      destination: register
+      lhs: register
+      shamt: literal
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - path: shamt
+      - literal: 0x2
+        size: 6
+
+  - name: sra
+    arguments:
+      destination: register
+      lhs: register
+      shamt: literal
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - path: shamt
+      - literal: 0x3
+        size: 6
+
+  - name: sllv
+    arguments:
+      destination: register
+      lhs: register
+      shamt: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - path: shamt
+      - literal: 0x4
+        size: 6
+
+  - name: srlv
+    arguments:
+      destination: register
+      lhs: register
+      shamt: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - path: shamt
+      - literal: 0x6
+        size: 6
+
+  - name: srav
+    arguments:
+      destination: register
+      lhs: register
+      shamt: register
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - path: lhs
+      - literal: 0x0
+        size: 5
+      - path: destination
+      - path: shamt
+      - literal: 0x7
+        size: 6
+
+ # ---------------------------------------------------------------------------
+ # Conditional Branch
+ # ---------------------------------------------------------------------------
+
+  - name: bczt
+    arguments:
+      destination: literal
+    byte sequence:
+      - literal: 0x1z
+        size: 6
+      - literal: 0x8
+        size: 5
+      - literal: 0x1
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bczf
+    arguments:
+      destination: literal
+    byte sequence:
+      - literal: 0x1z
+        size: 6
+      - literal: 0x8
+        size: 5
+      - literal: 0x0
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: beq
+    arguments:
+      lhs: register
+      rhs: register
+      destination: literal
+    byte sequence:
+      - literal: 0x4
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bgez
+    arguments:
+      value: register
+      destination: literal
+    byte sequence:
+      - literal: 0x1
+        size: 6
+      - path: value
+      - literal: 0x1
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bgezal
+    arguments:
+      value: register
+      destination: literal
+    byte sequence:
+      - literal: 0x1
+        size: 6
+      - path: value
+      - literal: 0x11
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bgtz
+    arguments:
+      value: register
+      destination: literal
+    byte sequence:
+      - literal: 0x7
+        size: 6
+      - path: value
+      - literal: 0x0
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: blez
+    arguments:
+      value: register
+      destination: literal
+    byte sequence:
+      - literal: 0x6
+        size: 6
+      - path: value
+      - literal: 0x1
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bltzal
+    arguments:
+      value: register
+      destination: literal
+    byte sequence:
+      - literal: 0x1
+        size: 6
+      - path: value
+      - literal: 0x10
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bltz
+    arguments:
+      value: register
+      destination: literal
+    byte sequence:
+      - literal: 0x1
+        size: 6
+      - path: value
+      - literal: 0x0
+        size: 5
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+  - name: bne
+    arguments:
+      lhs: register
+      rhs: register
+      destination: literal
+    byte sequence:
+      - literal: 0x5
+        size: 6
+      - path: lhs
+      - path: rhs
+      - path: destination
+      #- expression: "offset + 4 + 4 * destination"
+
+ # ---------------------------------------------------------------------------
+ # Unconditional Jump
+ # ---------------------------------------------------------------------------
+
+  - name: j
+    arguments:
+      offset: literal
+    byte sequence:
+      - literal: 0x2
+        size: 6
+      - path: offset
+        size: 26
+
+  - name: jr
+    arguments:
+      offset: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: offset
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x8
+        size: 6
+
+  - name: jalr
+    arguments:
+      offset: register
+      link: register
+    byte sequence:
+      - literal: 0x8
+        size: 6
+      - path: offset
+      - literal: 0x0
+        size: 5
+      - path: offset
+      - literal: 0x0
+        size: 5
+      - literal: 0x9
+        size: 6
+
+  - name: jal
+    arguments:
+      offset: literal
+    byte sequence:
+      - literal: 0x3
+        size: 6
+      - path: offset
+        size: 26
+
+ # ---------------------------------------------------------------------------
+ # Unconditional Jump
+ # ---------------------------------------------------------------------------
+
+  - name: rfe
+    arguments:
+    byte sequence:
+      - literal: 0x10
+        size: 6
+      - literal: 0x1
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x20
+        size: 6
+
+  - name: syscall
+    arguments:
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - literal: 0x1
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0xC
+        size: 6
+
+  - name: rfe
+    arguments:
+      code: literal
+    byte sequence:
+      - literal: 0x10
+        size: 6
+      - path: code
+        size: 20
+      - literal: 0xD
+        size: 6
+
+  - name: nop
+    arguments:
+    byte sequence:
+      - literal: 0x0
+        size: 6
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 5
+      - literal: 0x0
+        size: 6

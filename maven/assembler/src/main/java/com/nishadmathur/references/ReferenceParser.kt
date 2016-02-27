@@ -1,7 +1,6 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.configuration.Configuration
-import com.nishadmathur.instructions.InstructionFactory
 
 /**
  * User: nishad

@@ -4,7 +4,6 @@ import com.nishadmathur.configuration.Configuration
 import com.nishadmathur.errors.DataSourceParseError
 import com.nishadmathur.errors.InvalidOption
 import java.io.Serializable
-import kotlin.text.Regex
 
 /**
  * User: nishad
@@ -15,7 +14,7 @@ class IndexedReferenceFactory(override val type: String,
                               val memoryRegex: Regex,
                               val sourceBeforeOffset: Boolean,
                               val validLeftSideReferenceTypes: List<ReferenceFactory>,
-                              val validRightSideReferenceStrings: List<ReferenceFactory>): ReferenceFactory, Serializable {
+                              val validRightSideReferenceStrings: List<ReferenceFactory>) : ReferenceFactory, Serializable {
 
     override fun checkIsMatch(reference: String): Boolean {
         val matches = memoryRegex.findAll(reference)
@@ -74,35 +73,35 @@ class IndexedReferenceFactory(override val type: String,
         }
     }
 
-    companion object: ReferenceParser {
+    companion object : ReferenceParser {
         override fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): ReferenceFactory {
-            val type: String = properties.getRaw("name") as? String
-                    ?: throw InvalidOption("name", properties.getRaw("name"))
+            val type: String = properties["name"] as? String
+                ?: throw InvalidOption("name", properties["name"])
 
-            val memoryRegex: Regex = (properties.getRaw("regex") as? String)?.toRegex()
-                    ?: throw InvalidOption("regex", properties.getRaw("regex"))
+            val memoryRegex: Regex = (properties["regex"] as? String)?.toRegex()
+                ?: throw InvalidOption("regex", properties["regex"])
 
-            val sourceBeforeOffset: Boolean = properties.getRaw("source before offset") as? Boolean
-                    ?: false
+            val sourceBeforeOffset: Boolean = properties["source before offset"] as? Boolean
+                ?: false
 
-            val validLeftSideReferenceTypes: List<ReferenceFactory> = (properties.getRaw("valid left hand types") as? List<*>)
-                    ?.map { it as? String }
-                    ?.map { referenceFactories.getRaw(it) ?: throw InvalidOption(it.toString(), "Not a known option.")}
-                    ?.requireNoNulls()
-                    ?: throw InvalidOption("valid left hand types", properties.getRaw("valid left hand types"))
+            val validLeftSideReferenceTypes: List<ReferenceFactory> = (properties["valid left hand types"] as? List<*>)
+                ?.map { it as? String }
+                ?.map { referenceFactories[it] ?: throw InvalidOption(it.toString(), "Not a known option.") }
+                ?.requireNoNulls()
+                ?: throw InvalidOption("valid left hand types", properties["valid left hand types"])
 
-            val validRightSideReferenceStrings: List<ReferenceFactory> = (properties.getRaw("valid right hand types") as? List<*>)
-                    ?.map { it as? String }
-                    ?.map { referenceFactories.getRaw(it) ?: throw InvalidOption(it.toString(), "Not a known option.")}
-                    ?.requireNoNulls()
-                    ?: throw InvalidOption("valid right hand types", properties.getRaw("valid right hand types"))
+            val validRightSideReferenceStrings: List<ReferenceFactory> = (properties["valid right hand types"] as? List<*>)
+                ?.map { it as? String }
+                ?.map { referenceFactories[it] ?: throw InvalidOption(it.toString(), "Not a known option.") }
+                ?.requireNoNulls()
+                ?: throw InvalidOption("valid right hand types", properties["valid right hand types"])
 
             return IndexedReferenceFactory(
-                    type,
-                    memoryRegex,
-                    sourceBeforeOffset,
-                    validLeftSideReferenceTypes,
-                    validRightSideReferenceStrings
+                type,
+                memoryRegex,
+                sourceBeforeOffset,
+                validLeftSideReferenceTypes,
+                validRightSideReferenceStrings
             )
         }
     }

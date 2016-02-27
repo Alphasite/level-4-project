@@ -1,5 +1,6 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.assembler.RawLiteralConvertible
 import com.nishadmathur.util.SizedByteArray
 
 /**
@@ -7,8 +8,8 @@ import com.nishadmathur.util.SizedByteArray
  * Date: 04/10/2015
  * Time: 20:48
  */
-interface Reference {
-    val raw: SizedByteArray
+interface Reference : RawLiteralConvertible {
+
     val size: Int
 
     fun resolvePath(path: String): SizedByteArray

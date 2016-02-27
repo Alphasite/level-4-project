@@ -23,14 +23,17 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="assembler" />
+        <module name="web-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="assembler" target="1.5" />
       <module name="root" target="1.5" />
+      <module name="web-server" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="HaskellBuildOptions">
+    <ghcPath>/usr/local/bin/ghc</ghcPath>
     <cabalPath>/Library/Haskell/ghc-7.10.2-x86_64/bin/cabal</cabalPath>
   </component>
 </project>

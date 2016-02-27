@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/assembler/assembler.iml" filepath="$PROJECT_DIR$/assembler/assembler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../report/report.iml" filepath="$PROJECT_DIR$/../report/report.iml" />
       <module fileurl="file://$PROJECT_DIR$/root.iml" filepath="$PROJECT_DIR$/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/web-server/web-server.iml" filepath="$PROJECT_DIR$/web-server/web-server.iml" />
     </modules>
   </component>
 </project>

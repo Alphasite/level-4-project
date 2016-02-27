@@ -2,18 +2,17 @@ package com.nishadmathur.configuration
 
 import com.nishadmathur.assembler.IdentifierTable
 import com.nishadmathur.errors.IncompleteDeclarationParserError
-import com.nishadmathur.errors.MalformedDeclaration
-import com.nishadmathur.errors.MissingOrMalformedSection
 import com.nishadmathur.errors.InvalidOption
+import com.nishadmathur.errors.MalformedDeclaration
 import com.nishadmathur.instructions.InstructionFactory
 import com.nishadmathur.instructions.MetaInstructionFactory
 import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
 import com.nishadmathur.instructions.TypedInstructionFactory
+import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.*
 import org.yaml.snakeyaml.Yaml
 import java.io.Reader
 import java.util.*
-import kotlin.text.Regex
 
 /**
  * User: nishad
@@ -21,29 +20,43 @@ import kotlin.text.Regex
  * Time: 21:57
  */
 fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
-    val yaml = Yaml();
+    val yaml = Yaml()
     val config = yaml.load(file)
 
-    var configuration: Configuration?
-    var instructionFactories: InstructionFactory?
-    var referenceFactories: Map<String, ReferenceFactory>?
+    var configuration: Configuration
+    var instructionFactories: InstructionFactory
+    var referenceFactories: Map<String, ReferenceFactory>
+    var instructionFormats: Map<String, InstructionFormat>
 
     when (config) {
         is Map<*, *> -> {
-            val configurationMap = config.getRaw("configuration") as? Map<*, *>
-                    ?: throw IncompleteDeclarationParserError("Configuration is missing or malformed.")
+            val configurationMap = config["configuration"] as? Map<*, *>
+                ?: throw IncompleteDeclarationParserError("Configuration is missing or malformed.")
 
             configuration = parseConfiguration(configurationMap)
 
-            val referenceMap = config.getRaw("references") as? List<*>
-                    ?: throw IncompleteDeclarationParserError("Reference declaration is missing or malformed.")
+            val referenceMap = config["references"] as? List<*>
+                ?: throw IncompleteDeclarationParserError("Reference declaration is missing or malformed.")
+
+            val rawInstructionFormats = (config["instruction formats"] as? Map<*, *>)
+
+            if (rawInstructionFormats != null) {
+                instructionFormats = InstructionFormat.parseInstructionFormats(rawInstructionFormats)
+            } else {
+                instructionFormats = mapOf()
+            }
 
             referenceFactories = parseReference(referenceMap, configuration)
 
-            val instructionMap = config.getRaw("instructions") as? List<*>
-                    ?: throw IncompleteDeclarationParserError("Instruction declaration is incomplete or malformed.")
+            val instructionMap = config.get<Any?, Any?>("instructions" as Any?) as? List<*>
+                ?: throw IncompleteDeclarationParserError("Instruction declaration is incomplete or malformed.")
 
-            instructionFactories = parseInstructions(instructionMap, referenceFactories, configuration)
+            instructionFactories = parseInstructions(
+                instructionMap,
+                referenceFactories,
+                instructionFormats,
+                configuration
+            )
 
         }
 
@@ -51,36 +64,72 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
             throw MalformedDeclaration("The top level declaration is malformed; it should be a map.")
     }
 
-    configuration ?: throw MissingOrMalformedSection("Configuration is missing or malformed")
-    instructionFactories ?: throw MissingOrMalformedSection("Instruction factory is missing or malformed")
-
     return Pair(configuration, instructionFactories)
 }
 
-class Configuration(val identifierBitSize: Int,
+class Configuration(val identifierBitSize: Long,
                     val argumentSeparator: Regex,
                     val labelRegex: Regex,
                     val commentRegex: Regex,
-                    val wordSizeBits: Int) {
-    val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
+                    val wordSizeBits: Int,
+                    val smallSegmentSize: Int?,
+                    val largeSegmentSize: Int?,
+                    val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
+) {
+
+    val nestedConfiguration: Configuration
+        get() = Configuration(
+            identifierBitSize,
+            argumentSeparator,
+            labelRegex,
+            commentRegex,
+            wordSizeBits,
+            smallSegmentSize,
+            largeSegmentSize,
+            labelTable.childTable
+        )
 }
 
 fun parseConfiguration(config: Map<*, *>): Configuration {
-    val bitSize = config.getRaw("label bit size") as? Int
-            ?: throw InvalidOption("label bit size", config)
+    val bitSize = config["label bit size"] as? Int
+        ?: throw InvalidOption("label bit size", config)
 
-    val wordSize = config.getRaw("word size") as? Int
-            ?: throw InvalidOption("word size", config)
+    val wordSize = config["word size"] as? Int
+        ?: throw InvalidOption("word size", config)
 
-    val argumentSeparator = (config.getRaw("argument separator") as? String ?: " ").toRegex()
+    val argumentSeparator = (config["argument separator"] as? String ?: " ").toRegex()
 
-    val labelRegex = (config.getRaw("label regex") as? String)?.toRegex()
-            ?: throw InvalidOption("label regex", config)
+    val labelRegex = (config["label regex"] as? String)?.toRegex()
+        ?: throw InvalidOption("label regex", config)
 
-    val commentRegex = (config.getRaw("comment regex") as? String)?.toRegex()
-            ?: throw InvalidOption("comment regex", config)
+    val commentRegex = (config["comment regex"] as? String)?.toRegex()
+        ?: throw InvalidOption("comment regex", config)
 
-    val configuration = Configuration(bitSize, argumentSeparator, labelRegex, commentRegex, wordSize)
+    val (smallSegmentSize, largeSegmentSize) = if ("endian change" in config) {
+        val endianSwitch = (config["endian change"] as? Map<*, *>)?.map {
+            Pair(
+                it.key as? String ?: throw InvalidOption(it.key.toString(), config["endian change"] as Map<*, *>),
+                it.value as? Int ?: throw InvalidOption(it.key.toString(), config["endian change"] as Map<*, *>)
+            )
+        }?.toMap() ?: throw InvalidOption("endian change", config)
+
+        Pair(
+            endianSwitch["small segment size"] ?: throw InvalidOption("small segment size", endianSwitch),
+            endianSwitch["large segment size"] ?: throw InvalidOption("large segment size", endianSwitch)
+        )
+    } else {
+        Pair(null, null)
+    }
+
+    val configuration = Configuration(
+        bitSize.toLong(),
+        argumentSeparator,
+        labelRegex,
+        commentRegex,
+        wordSize,
+        smallSegmentSize,
+        largeSegmentSize
+    )
 
     return configuration
 }
@@ -90,15 +139,15 @@ fun parseReference(config: List<*>, configuration: Configuration): Map<String, R
 
     for (value in config) {
         val map = value as? Map<*, *> ?: throw MalformedDeclaration("Every child of References should be a map.")
-        val name = map.getRaw("name") as? String ?: throw MalformedDeclaration("Field name must be a non-null string.")
-        val kind = map.getRaw("kind") as? String ?: throw MalformedDeclaration("Field kind must be a non-null string.")
+        val name = map["name"] as? String ?: throw MalformedDeclaration("Field name must be a non-null string.")
+        val kind = map["kind"] as? String ?: throw MalformedDeclaration("Field kind must be a non-null string.")
 
         when (kind) {
-            "meta"-> references.putAll(MetaReferenceFactory.parse(map, references, configuration))
-            "indexed"-> references[name] = IndexedReferenceFactory.parse(map, references, configuration)
-            "label"-> references[name] = LabelReferenceFactory.parse(map, references, configuration)
-            "literal"-> references[name] = LiteralReferenceFactory.parse(map, references, configuration)
-            "mapped"-> references[name] = MappedReferenceFactory.parse(map, references, configuration)
+            "meta" -> references.putAll(MetaReferenceFactory.parse(map, references, configuration))
+            "indexed" -> references[name] = IndexedReferenceFactory.parse(map, references, configuration)
+            "label" -> references[name] = LabelReferenceFactory.parse(map, references, configuration)
+            "literal" -> references[name] = LiteralReferenceFactory.parse(map, references, configuration)
+            "mapped" -> references[name] = MappedReferenceFactory.parse(map, references, configuration)
             else -> throw InvalidOption("kind", kind.toString())
         }
     }
@@ -106,16 +155,21 @@ fun parseReference(config: List<*>, configuration: Configuration): Map<String, R
     return references
 }
 
-fun parseInstructions(config: List<*>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): InstructionFactory {
+fun parseInstructions(
+    config: List<*>,
+    referenceFactories: Map<String, ReferenceFactory>,
+    instructionFormats: Map<String, InstructionFormat>,
+    configuration: Configuration
+): InstructionFactory {
     val instructions = MetaInstructionFactory()
 
     for (value in config) {
         val map = value as? Map<*, *> ?: throw MalformedDeclaration("Every child of Instructions should be a map.")
-        val kind = map.getRaw("kind") as? String ?: "instruction"
+        val kind = map["kind"] as? String ?: "instruction"
 
         val instruction = when (kind) {
-            "meta" -> TypePolymorphicInstructionFactory.parse(map, referenceFactories, configuration)
-            "instruction" -> TypedInstructionFactory.parse(map, referenceFactories, configuration)
+            "meta" -> TypePolymorphicInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
+            "instruction" -> TypedInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
             else -> throw InvalidOption("kind", kind.toString())
         }
 

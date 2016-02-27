@@ -1,0 +1,542 @@
+# Intend to implement basic instructions:
+# add, sub, load {literal, memory}, store, jump, gt, lt, eq
+
+# Want to support
+# http://zenit.senecac.on.ca/wiki/index.php/Aarch64_Register_and_Instruction_Quick_Start
+# add r0,r1,r2      // load r0 with r1+r2
+# add r0,r1,99      // load r0 with r1+99
+# sub r0,r1,r2      // load r0 with r1-r2
+# sub r0,r1,99      // load r0 with r1-99
+# b.eq label        // branch to label if equal
+# b.ne label        // branch to label if not equal
+# b.lt label        // branch to label if less
+# b.gt label        // branch to label if greater
+# cmp r0,r1         // compare register r0 with register r1. The comparison sets flags in the processor status register which affect conditional branches.
+# cmp r0,99         // compare the number 99 with register r0. The comparison sets flags in the processor status register which affect conditional branches.
+# ldr r0,[r1,0]     // load register r0 from the address pointed to by (r1 + (0 * size)) where size is 8 bytes for 64-bit stores, 4 bytes for 32-bit stores
+# mov r0,r1         // move data from r1 to r0
+# mov r0,99         // load r0 with 99 (only certain immediate values are possible)
+# str r0,[r1,0]     // store register r0 to address pointed to by (r1 + (0 * size)) where size is 8 bytes for 64-bit stores
+# svc 0             // perform a syscall
+# push r0           // push r0 onto the stack
+# pop r0            // pop r0 off the stack
+
+# This needs constant pools and relative addressing to really work properly.
+# Expression driven instruction selction may also be worthwhile.
+
+configuration:
+  line can start with label: true
+  label bit size: 16
+  word size: 16
+  label regex: "^(\\w+)"
+  argument separator: ",\\s*"
+  comment regex: ";.*"
+
+references:
+  - name: literal
+    kind: meta
+    references:
+      - name: literal4
+        kind: meta
+        references:
+          - name: hexadecimal
+            kind: literal
+            literal type: HEXADECIMAL
+            literal size: 4
+            validation regex: "0x\\d+"
+            extraction regex: "0x(\\d+)"
+
+          - name: int4
+            kind: literal
+            literal type: INTEGER
+            literal size: 4
+            validation regex: "\\d+"
+            extraction regex: "(\\d+)"
+
+      - name: literal16
+        kind: meta
+        references:
+          - name: hexadecimal
+            kind: literal
+            literal type: HEXADECIMAL
+            literal size: 16
+            validation regex: "0x\\d+"
+            extraction regex: "0x(\\d+)"
+
+          - name: int4
+            kind: literal
+            literal type: INTEGER
+            literal size: 16
+            validation regex: "(\\+|-)?\\d+"
+            extraction regex: "((\\+|-)?\\d+)"
+
+      - name: literal32
+        kind: meta
+        references:
+          - name: hexadecimal
+            kind: literal
+            literal type: HEXADECIMAL
+            literal size: 32
+            validation regex: "0x\\d+"
+            extraction regex: "0x(\\d+)"
+
+          - name: int4
+            kind: literal
+            literal type: INTEGER
+            literal size: 32
+            validation regex: "(\\+|-)?\\d+"
+            extraction regex: "((\\+|-)?\\d+)"
+
+  - name: registers
+    kind: meta
+    references:
+    - name: general registers
+      kind: meta
+      references:
+      - name: 64bit general registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "[X|x|r]{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+      - name: 32bit general registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "[W|w]{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+    - name: special registers
+      kind: mapped
+      size: 4
+      mappings:
+        PC: 0
+        SP: 0
+        WSP: 0
+        ELR: 0
+
+    - name: simd registers
+      kind: meta
+      references:
+      - name: 128bit simd registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "Q{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+      - name: 64bit simd registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "D{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+      - name: 32bit simd registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "S{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+      - name: 16bit simd registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "H{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+      - name: 8bit simd registers
+        kind: mapped
+        size: 4
+        range:
+          format string: "B{0}"
+          start index: 0
+          start literal: 0
+          count: 32
+
+  - name: label
+    kind: label
+    size: 16
+    validation regex: "^\\w+$"
+    extraction regex: "\\w+"
+
+  - name: memory
+    kind: indexed
+    source before offset: true
+    regex: "(.*?)\\[(.*?)\\]"
+    valid left hand types:
+      - literal16
+      - label
+    valid right hand types:
+      - registers
+
+  - name: register indexed
+    kind: indexed
+    source before offset: true
+    regex: "\\[.*?,.*?\\]"
+    valid left hand types:
+      - 64bit general registers
+    valid right hand types:
+      - literal
+
+instruction formats:
+  compare and branch:
+    - literal: 0xA2
+      size: 8
+    - path: label
+      size: 19
+    - literal: 0x01
+      size: 1
+    - path: cond
+      size: 4
+
+instructions:
+  - name: add
+    kind: meta
+    instructions:
+      - name: addrrr
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: sourceA
+            size: 5
+          - literal: 0
+            size: 5
+          - path: sourceB
+            size: 5
+          - literal: 0xD0 # add/sub instruction
+            size: 8
+          - literal: 0 # shift
+            size: 1
+          - literal: 1 # add op
+            size: 1
+          - literal: 1 # 64bit
+            size: 1
+        arguments:
+          destination: 64bit general registers
+          sourceA: 64bit general registers
+          sourceB: 64bit general registers
+
+      - name: addrrl
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: sourceA
+            size: 5
+          - path: "sourceB + shift" # literal + 2 shift bits
+            size: 13
+          - literal: 0xD0 # add/sub instruction
+            size: 5
+          - literal: 1 # shift
+            size: 1
+          - literal: 1 # add op
+            size: 1
+          - literal: 1 # 64bit
+            size: 1
+        arguments:
+          destination: 64bit general registers
+          sourceA: 64bit general registers
+          sourceB + shift: literal
+
+  - name: b
+    byte sequence:
+      - path: label
+        size: 26
+      - literal: 0x5
+        size: 5
+    arguments:
+      destination: label
+
+  - name: b.eq
+    byte sequence:
+      - literal: 0
+        size: 4
+      - literal: 0
+        size: 1
+      - path: label
+        size: 19
+      - literal: 0
+        size: 1
+      - literal: 0xA2
+        size: 8
+    arguments:
+      destination: label
+
+  - name: b.ne
+    byte sequence:
+      - literal: 1
+        size: 4
+      - literal: 0
+        size: 1
+      - path: label
+        size: 19
+      - literal: 0
+        size: 1
+      - literal: 0xA2
+        size: 8
+    arguments:
+      destination: label
+
+  - name: b.lt
+    byte sequence:
+      - literal: 0xB
+        size: 4
+      - literal: 0
+        size: 1
+      - path: label
+        size: 19
+      - literal: 0
+        size: 1
+      - literal: 0xA2
+        size: 8
+    arguments:
+      destination: label
+
+  - name: b.gt
+    byte sequence:
+      - literal: 0xC
+        size: 4
+      - literal: 0
+        size: 1
+      - path: label
+        size: 19
+      - literal: 0
+        size: 1
+      - literal: 0xA2
+        size: 8
+    arguments:
+      destination: label
+
+  - name: cmp
+    kind: meta
+    instructions:
+      - name: cmprr
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: sourceA
+            size: 5
+          - literal: 0
+            size: 6
+          - path: sourceB
+            size: 5
+          - literal: 0x59 # add/sub instruction
+            size: 8
+          - literal: 0 # shift
+            size: 1
+          - literal: 1 # add op
+            size: 1
+          - literal: 1 # 64bit
+            size: 1
+        arguments:
+          sourceA: 64bit general registers
+          sourceB: 64bit general registers
+
+      - name: cmprl
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: sourceA
+            size: 5
+          - path: sourceB
+            size: 12
+          - literal: 0
+            size: 2
+          - literal: 17 # add/sub instruction
+            size: 5
+          - literal: 1 #S
+            size: 1
+          - literal: 1 # add op
+            size: 1
+          - literal: 1 # 64bit
+            size: 1
+        arguments:
+          sourceA: 64bit general registers
+          sourceB: literal
+
+  - name: ldr
+    kind: meta
+    instructions:
+      - name: ldrrri
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: source
+            size: 5
+          - literal: 1
+            size: 2
+          - path: label
+            size: 9
+          - literal: 0x7C2
+            size: 11
+        arguments:
+          destination: 64bit general registers
+          source: registers
+          offset: label
+
+      - name: ldrrrr
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: source
+            size: 5
+          - literal: 2
+            size: 6
+          - path: offset
+            size: 5
+          - literal: 0x7C3
+            size: 11
+        arguments:
+          destination: 64bit general registers
+          source: registers
+          offset: registers
+
+      - name: ldrri
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: value
+            size: 19
+          - literal: 58
+            size: 8
+        arguments:
+          destination: 64bit general registers
+          value: registers
+
+  - name: mov
+    kind: meta
+    instructions:
+      - name: mov rr
+        byte sequence:
+          - path: destination
+            size: 5
+          - literal: 0
+            size: 11
+          - path: source
+            size: 5
+          - literal: 0x2A8
+            size: 11
+        arguments:
+          destination: 64bit general registers
+          source: 64bit general registers
+
+      - name: mov rl
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: literal
+            size: 16
+          - literal: 0x694
+            size: 11
+        arguments:
+          destination: 64bit general registers
+          literal: literal
+
+  - name: str
+    byte sequence:
+      - path: destination
+        size: 5
+      - path: source
+        size: 5
+      - literal: 1
+        size: 2
+      - path: offset
+        size: 9
+      - literal: 0x7C0
+        size: 11
+    arguments:
+        destination: 64bit general registers
+        source: registers
+        offset: literal
+
+  - name: sub
+    kind: meta
+    instructions:
+      - name: subrrr
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: sourceA
+            size: 5
+          - literal: 0
+            size: 6
+          - path: sourceB
+            size: 5
+          - literal: 0x59 # add/sub instruction
+            size: 8
+          - literal: 0 # shift
+            size: 1
+          - literal: 1 # add op
+            size: 1
+          - literal: 1 # 64bit
+            size: 1
+        arguments:
+          destination: 64bit general registers
+          sourceA: 64bit general registers
+          sourceB: 64bit general registers
+
+      - name: subrrl
+        byte sequence:
+          - path: destination
+            size: 5
+          - path: sourceA
+            size: 5
+          - path: sourceB
+            size: 12
+          - literal: 0
+            size: 2
+          - literal: 17 # add/sub instruction
+            size: 5
+          - literal: 0 #S
+            size: 1
+          - literal: 1 # add op
+            size: 1
+          - literal: 1 # 64bit
+            size: 1
+        arguments:
+          destination: 64bit general registers
+          sourceA: 64bit general registers
+          sourceB + shift: literal
+
+  - name: svc
+    byte sequence:
+      - literal: 0x1
+        size: 2
+      - path: syscall
+        size: 16
+      - literal: 0x6A0
+        size: 11
+    arguments:
+      syscall: literal
+
+#  - name: push
+#    byte sequence:
+#      -
+#    arguments:
+#      register to push: 64bit general registers
+#
+#  - name: pop
+#    byte sequence:
+#      -
+#    arguments:
+#      destination: 64bit general registers
+
+  - name: .data
+    byte sequence: 0x00
+    size: 0
+    arguments:
+      data: literal32

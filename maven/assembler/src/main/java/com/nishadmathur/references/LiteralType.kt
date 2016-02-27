@@ -1,7 +1,6 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.util.SizedByteArray
-import com.nishadmathur.util.toByteArray
 import java.math.BigInteger
 
 /**
@@ -18,8 +17,7 @@ enum class LiteralType {
 
     HEXADECIMAL {
         override fun convertValue(value: String, size: Int): SizedByteArray {
-            val hexString = value[2, value.length].toString()
-            return SizedByteArray(BigInteger(hexString, 16).toByteArray(), size)
+            return SizedByteArray(BigInteger(value, 16).toByteArray(), size)
         }
     },
 

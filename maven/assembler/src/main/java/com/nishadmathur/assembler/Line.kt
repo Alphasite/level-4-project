@@ -20,14 +20,25 @@ class Line(val lineNumber: Int, val line: String) {
     var offset: SizedByteArray? = null
         set(offset) {
             field = offset
+
+            // TODO implement this.
+            //            if (instruction == null) {
+            //                this.label?.offset = offset + 1 // Otherwise
+            //            } else {
+            this.instruction?.offset = offset
             this.label?.offset = offset
+            //            }
         }
 
     // For what ever reason un-backed fields cant access local fields
     val size: Int
         get() = this.instruction?.size ?: 0
 
-    fun parseLine(configuration: Configuration, instructionFactory: InstructionFactory, labelTable: IdentifierTable) {
+    fun parseLine(
+        configuration: Configuration,
+        instructionFactory: InstructionFactory,
+        labelTable: IdentifierTable
+    ) {
 
         comment = configuration.commentRegex.find(line)?.value
         var body = configuration.commentRegex.replace(line, "")
@@ -51,9 +62,9 @@ class Line(val lineNumber: Int, val line: String) {
             val name = instructionSection.substringBefore(" ")
 
             val instructionSegments = instructionSection.substringAfter(" ")
-                    .split(configuration.argumentSeparator)
-                    .map { it.trim() }
-                    .filter { it.length > 0 }
+                .split(configuration.argumentSeparator)
+                .map { it.trim() }
+                .filter { it.length > 0 }
 
             if (instructionSegments.size > 0) {
                 this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)

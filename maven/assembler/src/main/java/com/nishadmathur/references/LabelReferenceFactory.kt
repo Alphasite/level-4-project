@@ -2,12 +2,9 @@ package com.nishadmathur.references
 
 import com.nishadmathur.assembler.IdentifierTable
 import com.nishadmathur.configuration.Configuration
-import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.errors.DataSourceParseError
-import com.nishadmathur.errors.InvalidImplementation
 import com.nishadmathur.errors.InvalidOption
 import java.io.Serializable
-import kotlin.text.Regex
 
 /**
  * User: nishad
@@ -38,24 +35,24 @@ class LabelReferenceFactory(override val type: String,
 
     companion object : ReferenceParser {
         override fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): ReferenceFactory {
-            val type: String = properties.getRaw("name") as? String
-                    ?: throw InvalidOption("name", properties.getRaw("name"))
+            val type: String = properties["name"] as? String
+                ?: throw InvalidOption("name", properties["name"])
 
-            val size: Int = properties.getRaw("size") as? Int
-                    ?: throw InvalidOption("size", properties.getRaw("size"))
+            val size: Int = properties["size"] as? Int
+                ?: throw InvalidOption("size", properties["size"])
 
-            val labelRegex: Regex = (properties.getRaw("validation regex") as? String)?.toRegex()
-                    ?: throw InvalidOption("validation regex", properties.getRaw("validation regex"))
+            val labelRegex: Regex = (properties["validation regex"] as? String)?.toRegex()
+                ?: throw InvalidOption("validation regex", properties["validation regex"])
 
-            val labelExtractionRegex: Regex = (properties.getRaw("extraction regex") as? String)?.toRegex()
-                    ?: throw InvalidOption("extraction regex", properties.getRaw("extraction regex"))
+            val labelExtractionRegex: Regex = (properties["extraction regex"] as? String)?.toRegex()
+                ?: throw InvalidOption("extraction regex", properties["extraction regex"])
 
             return LabelReferenceFactory(
-                    type,
-                    configuration.labelTable,
-                    size,
-                    labelRegex,
-                    labelExtractionRegex
+                type,
+                configuration.labelTable,
+                size,
+                labelRegex,
+                labelExtractionRegex
             )
         }
     }

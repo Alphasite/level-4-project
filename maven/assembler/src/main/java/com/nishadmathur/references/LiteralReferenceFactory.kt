@@ -1,11 +1,9 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.configuration.Configuration
-import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.errors.DataSourceParseError
 import com.nishadmathur.errors.InvalidOption
 import java.io.Serializable
-import kotlin.text.Regex
 
 /**
  * User: nishad
@@ -30,13 +28,13 @@ class LiteralReferenceFactory(override val type: String,
         }
     }
 
-    companion object: ReferenceParser {
+    companion object : ReferenceParser {
         override fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): ReferenceFactory {
-            val type: String = properties.getRaw("name") as? String
-                    ?: throw InvalidOption("name", properties.getRaw("name"))
+            val type: String = properties["name"] as? String
+                ?: throw InvalidOption("name", properties["name"])
 
-            val rawLiteralType = properties.getRaw("literal type") as? String
-                    ?: throw InvalidOption("literal type", properties.getRaw("literal type"))
+            val rawLiteralType = properties["literal type"] as? String
+                ?: throw InvalidOption("literal type", properties["literal type"])
 
             val literalType: LiteralType = try {
                 LiteralType.valueOf(rawLiteralType)
@@ -44,22 +42,21 @@ class LiteralReferenceFactory(override val type: String,
                 throw InvalidOption("literal type", rawLiteralType)
             }
 
-            val literalSize: Int = properties.getRaw("literal size") as? Int
-                    ?: throw InvalidOption("literal size", properties.getRaw("literal size"))
+            val literalSize: Int = properties["literal size"] as? Int
+                ?: throw InvalidOption("literal size", properties["literal size"])
 
-            // For now these alias the same one, i may choose to change this later.
-            val literalIdentificationRegex: Regex = (properties.getRaw("validation regex") as? String)?.toRegex()
-                    ?: throw InvalidOption("validation regex", properties.getRaw("validation regex"))
+            val literalIdentificationRegex: Regex = (properties["validation regex"] as? String)?.toRegex()
+                ?: throw InvalidOption("validation regex", properties["validation regex"])
 
-            val literalExtractionRegex: Regex = (properties.getRaw("extraction regex") as? String)?.toRegex()
-                    ?: throw InvalidOption("extraction regex", properties.getRaw("extraction regex"))
+            val literalExtractionRegex: Regex = (properties["extraction regex"] as? String)?.toRegex()
+                ?: throw InvalidOption("extraction regex", properties["extraction regex"])
 
             return LiteralReferenceFactory(
-                    type,
-                    literalType,
-                    literalSize,
-                    literalIdentificationRegex,
-                    literalExtractionRegex
+                type,
+                literalType,
+                literalSize,
+                literalIdentificationRegex,
+                literalExtractionRegex
             )
         }
     }

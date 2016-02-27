@@ -4,8 +4,6 @@ import com.nishadmathur.configuration.Configuration
 import com.nishadmathur.configuration.parseReference
 import com.nishadmathur.errors.DataSourceParseError
 import com.nishadmathur.errors.InvalidOption
-import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
-import com.nishadmathur.instructions.TypedInstructionFactory
 import java.io.Serializable
 import java.util.*
 
@@ -14,13 +12,13 @@ import java.util.*
  * Date: 05/10/2015
  * Time: 05:57
  */
-class MetaReferenceFactory(override val type: String): ReferenceFactory, Serializable {
+class MetaReferenceFactory(override val type: String) : ReferenceFactory, Serializable {
 
     internal var referenceFactories: TreeSet<Pair<Int, ReferenceFactory>>
     internal var referenceFactoriesMapping: MutableMap<String, ReferenceFactory>
 
     init {
-        this.referenceFactories = TreeSet<Pair<Int, ReferenceFactory>>(comparator { a, b -> a.first.compareTo(b.first) })
+        this.referenceFactories = TreeSet<Pair<Int, ReferenceFactory>>({ a, b -> a.first.compareTo(b.first) })
         this.referenceFactoriesMapping = HashMap()
     }
 
@@ -52,18 +50,18 @@ class MetaReferenceFactory(override val type: String): ReferenceFactory, Seriali
 
     companion object {
         fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): Map<String, ReferenceFactory> {
-            val name = properties.getRaw("name") as? String
-                    ?: throw InvalidOption("name", properties)
+            val name = properties["name"] as? String
+                ?: throw InvalidOption("name", properties)
 
-            val references = (properties.getRaw("references") as? List<*>)
-                    ?.map { it as? Map<*, *> }
-                    ?.requireNoNulls()
-                    ?: throw InvalidOption("references", properties)
+            val references = (properties["references"] as? List<*>)
+                ?.map { it as? Map<*, *> }
+                ?.requireNoNulls()
+                ?: throw InvalidOption("references", properties)
 
             val meta = MetaReferenceFactory(name)
             val newReferenceFactories = parseReference(references, configuration) as MutableMap
 
-            newReferenceFactories.values.mapIndexed { i, factory -> meta.addReference(factory, i)}
+            newReferenceFactories.values.mapIndexed { i, factory -> meta.addReference(factory, i) }
 
             newReferenceFactories[name] = meta
             newReferenceFactories.putAll(newReferenceFactories)

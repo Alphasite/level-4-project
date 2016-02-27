@@ -7,7 +7,7 @@ import com.nishadmathur.errors.InstructionParseError
  * Date: 12/10/2015
  * Time: 12:24
  */
-class MetaInstructionFactory: InstructionFactory {
+class MetaInstructionFactory : InstructionFactory {
     override val factoryMap: Map<String, InstructionFactory>
         get() = factories.map { it.factoryMap.entries.map { it.toPair() } }.flatten().toMap()
 

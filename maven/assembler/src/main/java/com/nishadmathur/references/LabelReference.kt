@@ -4,8 +4,6 @@ import com.nishadmathur.assembler.IdentifierTable
 import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.errors.UndeclaredLabelError
 import com.nishadmathur.util.SizedByteArray
-import com.nishadmathur.util.toByteArray
-import java.util.*
 
 /**
  * User: nishad
@@ -14,7 +12,11 @@ import java.util.*
  */
 class LabelReference(val label: String, val labelTable: IdentifierTable, override val size: Int) : Reference {
     override fun resolvePath(path: String): SizedByteArray {
-        return if (path == "") { this.raw } else { throw PathResolutionError(path) }
+        return if (path == "") {
+            this.raw
+        } else {
+            throw PathResolutionError(path)
+        }
     }
 
     // Size must be <32bits

@@ -2,22 +2,12 @@ package com.nishadmathur.assembler
 
 import com.nishadmathur.configuration.Configuration
 import com.nishadmathur.errors.AssemblerError
-import com.nishadmathur.errors.LineParseError
-import com.nishadmathur.instructions.Instruction
 import com.nishadmathur.instructions.InstructionFactory
-import com.nishadmathur.instructions.MetaInstructionFactory
-import com.nishadmathur.references.MetaReferenceFactory
-import com.nishadmathur.references.Reference
-import com.nishadmathur.references.ReferenceFactory
 import com.nishadmathur.util.SizedByteArray
-import com.nishadmathur.util.intToByteArray
 import com.nishadmathur.util.toByteArray
-import sun.tools.asm.Assembler
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileReader
+import java.lang.Math.ceil
+import java.lang.Math.log10
 import java.util.*
-import java.util.stream.IntStream
 
 /**
  * User: nishad
@@ -26,10 +16,25 @@ import java.util.stream.IntStream
  */
 class Assembler(val configuration: Configuration, val instructionFactory: InstructionFactory, val identifierTable: IdentifierTable) {
     val lines = ArrayList<Line>()
-    val word_size = 32
+    var offset: Long = 0
 
-    fun loadFile(path: String) {
-        Scanner(FileReader(path)).use {
+    val listings: String
+        get() {
+            val maxLineNumberLength = ceil(log10(lines.map { it.lineNumber }.max()?.toDouble() ?: 0.0)).toInt()
+
+            val hexLines = lines.map { it.instruction?.raw?.hex ?: "" }
+
+            val maxLength = hexLines.map { it.length }.max() ?: 0
+
+            return lines.zip(hexLines).map {
+                val (line, hex) = it
+                val lineNumber = line.lineNumber.toString().padEnd(maxLineNumberLength)
+                "$lineNumber | ${hex.padEnd(maxLength)} | ${line.line}"
+            }.joinToString("\n")
+        }
+
+    fun loadFile(file: Scanner) {
+        file.use {
 
             var stringLines: MutableList<String> = ArrayList()
 
@@ -46,7 +51,7 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
 
     }
 
-    fun assemble(file: String): SizedByteArray {
+    fun assemble(file: Scanner, isTopLevel: Boolean): SizedByteArray {
         this.loadFile(file)
 
         for (line in this.lines) {
@@ -62,30 +67,25 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
             .filterNotNull()
             .filter { it.bitSize > 0 }
 
-        var labels = this.lines.map { it.label }.filter { it != null }
-
-        println("Instructions:")
-        lines.forEach { println(it) }
+        println("Listings:")
+        println(listings)
         println()
 
-        println("Raw Bytes:")
-        instructionBytes.forEach { println(it) }
-        println()
-
-        println("Labels:")
-        println(labels)
-        println()
-
-        return SizedByteArray.join(instructionBytes) // TODO do!
+        val bytes = SizedByteArray.join(instructionBytes)
+        if (isTopLevel && configuration.smallSegmentSize != null && configuration.largeSegmentSize != null) {
+            return bytes.reverseEndianess(configuration.smallSegmentSize, configuration.largeSegmentSize)
+        } else {
+            return bytes
+        }
     }
 
     fun calculateOffsets(lines: List<Line>): List<Line> {
-        var offset: Int = 0
+        var offset: Long = this.offset
         var offsetLines = arrayListOf<Line>()
 
         for (line in lines) {
             annotateError(line) {
-                line.offset = SizedByteArray(offset.toByteArray(), configuration.identifierBitSize)
+                line.offset = SizedByteArray(offset.toByteArray(), configuration.identifierBitSize.toInt())
                 offsetLines.add(line)
                 offset += line.size / configuration.wordSizeBits // Size is bit size not byte size.
             }
@@ -100,7 +100,7 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
             System.exit(-1)
         }
 
-        fun annotateError<T>(line: Line, function: (Line) -> T): T {
+        fun <T> annotateError(line: Line, function: (Line) -> T): T {
             try {
                 return function(line)
             } catch (e: AssemblerError) {

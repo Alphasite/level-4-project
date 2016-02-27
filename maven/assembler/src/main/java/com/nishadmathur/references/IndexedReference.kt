@@ -2,7 +2,6 @@ package com.nishadmathur.references
 
 import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.util.SizedByteArray
-import java.util.*
 
 /**
  * User: nishad

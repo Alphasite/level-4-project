@@ -10,7 +10,7 @@ import com.nishadmathur.util.toByteArray
  * Time: 09:13
  */
 class Label(val identifier: String, val identifierTable: IdentifierTable) {
-    var offset: SizedByteArray? = SizedByteArray((identifierTable.nextIdentifier++).toByteArray(), identifierTable.size)
+    var offset: SizedByteArray? = SizedByteArray((identifierTable.nextIdentifier++).toByteArray(), identifierTable.size.toInt())
 
     val raw: SizedByteArray
         get() {

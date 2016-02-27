@@ -1,6 +1,7 @@
 package com.nishadmathur.instructions
 
 import com.nishadmathur.configuration.Configuration
+import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.ReferenceFactory
 
 /**
@@ -9,5 +10,5 @@ import com.nishadmathur.references.ReferenceFactory
  * Time: 18:31
  */
 interface InstructionParser {
-    fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): InstructionFactory
+    fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, instructionFormats: Map<String, InstructionFormat>, configuration: Configuration): InstructionFactory
 }
