@@ -98,9 +98,9 @@ class TypedInstructionFactory(
             
             val arguments: List<Pair<String, ReferenceFactory>> = rawArguments
                 .map {
-                    val referenceName = it.key as? String ?: throw InvalidOption("arguments > name", it)
-                    val referenceKind = it.value as? String ?: throw InvalidOption("arguments > name", it)
-                    val factory = referenceFactories[referenceKind] ?: throw InvalidOption("arguments > type", it)
+                    val referenceName = it.key as? String ?: throw InvalidOption("arguments.name", it)
+                    val referenceKind = it.value as? String ?: throw InvalidOption("arguments.name", it)
+                    val factory = referenceFactories[referenceKind] ?: throw InvalidOption("arguments.type", it)
                     Pair(referenceName, factory)
                 }
             

@@ -43,7 +43,7 @@ class Line(val lineNumber: Int, val line: String) {
         comment = configuration.commentRegex.find(line)?.value
         var body = configuration.commentRegex.replace(line, "")
 
-        val label = configuration.labelRegex.find(body)?.value
+        val label = configuration.labelRegex.find(body)?.groups?.get(1)?.value
         body = configuration.labelRegex.replace(body, "")
 
         val arguments = body.split(configuration.labelRegex).filter { it.length > 0 }

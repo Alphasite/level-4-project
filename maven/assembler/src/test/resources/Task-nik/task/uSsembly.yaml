@@ -1,0 +1,103 @@
+configuration:
+  line can start with label: true
+  label bit size: 4
+  word size: 16
+  label regex: "^(\\w+):"
+  argument separator: ",\\s*"
+  comment regex: "//.*"
+
+references:
+  - name: Glorious Register Proletariat
+    kind: meta
+    references:
+      - name: filthy capitalist pigs
+        kind: mapped
+        size: 4
+        range:
+          format string: "pig{0}"
+          start index: 0
+          start literal: 0
+          count: 4
+      - name: things
+        kind: mapped
+        size: 4
+        mappings:
+          water: 0x4
+
+  - name: literal plebs
+    kind: meta
+    references:
+      - name: hexadecimal
+        kind: literal
+        literal type: HEXADECIMAL
+        literal size: 4
+        validation regex: "0x\\d+"
+        extraction regex: "0x(\\d+)"
+      - name: int4
+        kind: literal
+        literal type: INTEGER
+        literal size: 4
+        validation regex: "\\d+"
+        extraction regex: "(\\d+)"
+
+  - name: label
+    kind: label
+    size: 4
+    validation regex: "^#\\w+$"
+    extraction regex: "\\w+"
+
+  - name: memory
+    kind: indexed
+    source before offset: true
+    regex: "(.*?)\\[(.*?)\\]"
+    valid left hand types:
+      - label
+    valid right hand types:
+      - literal plebs
+
+instructions:
+  - name: put
+    byte sequence: 0x02
+    size: 4
+    arguments:
+      destination: Glorious Register Proletariat
+      value: memory
+  - name: freeze
+    arguments:
+      thing to freeze: Glorious Register Proletariat
+    byte sequence:
+      - literal: 0x1
+        size: 4
+      - path: thing to freeze
+        size: 4
+      - literal: 0x0
+        size: 8
+  - name: .data
+    kind: meta
+    instructions:
+      - name: .data1
+        byte sequence: 0x0
+        size: 0
+        arguments:
+          data0: literal plebs
+      - name: .data2
+        byte sequence: 0x0
+        size: 0
+        arguments:
+          data0: literal plebs
+          data1: literal plebs
+  - name: goto
+    arguments:
+      bananarama: label
+    byte sequence:
+      - literal: 0x1
+        size: 4
+      - literal: 0x0
+        size: 4
+      - path: bananarama
+        size: 4
+      - literal: 0x0
+        size: 4
+
+
+

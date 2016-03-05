@@ -86,13 +86,13 @@ class IndexedReferenceFactory(override val type: String,
 
             val validLeftSideReferenceTypes: List<ReferenceFactory> = (properties["valid left hand types"] as? List<*>)
                 ?.map { it as? String }
-                ?.map { referenceFactories[it] ?: throw InvalidOption(it.toString(), "Not a known option.") }
+                ?.map { referenceFactories[it] ?: throw InvalidOption("valid right hand types", it.toString()) }
                 ?.requireNoNulls()
                 ?: throw InvalidOption("valid left hand types", properties["valid left hand types"])
 
             val validRightSideReferenceStrings: List<ReferenceFactory> = (properties["valid right hand types"] as? List<*>)
                 ?.map { it as? String }
-                ?.map { referenceFactories[it] ?: throw InvalidOption(it.toString(), "Not a known option.") }
+                ?.map { referenceFactories[it] ?: throw InvalidOption("valid right hand types", it.toString()) }
                 ?.requireNoNulls()
                 ?: throw InvalidOption("valid right hand types", properties["valid right hand types"])
 

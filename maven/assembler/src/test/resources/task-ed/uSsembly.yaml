@@ -1,0 +1,96 @@
+configuration:
+  line can start with label: true
+  label bit size: 4
+  word size: 16
+  label regex: "^(\\w+):"
+  argument separator: ",\\s*"
+  comment regex: "//.*"
+references:
+  - name: register
+    kind: meta
+    references:
+      - name: filthy capitalist pigs
+        kind: mapped
+        size: 4
+        range:
+          format string: "pig{0}"
+          start index: 0
+          start literal: 0
+          count: 4
+      - name: things
+        kind: mapped
+        size: 4
+        mappings:
+          water: 0x4
+  - name: literal
+    kind: meta
+    references:
+     - name: hexadecimal
+       kind: literal
+       literal type: HEXADECIMAL
+       literal size: 4
+       validation regex: "0x\\d+"
+       extraction regex: "0x(\\d+)"
+     - name: int4
+       kind: literal
+       literal type: INTEGER
+       literal size: 4
+       validation regex: "\\d+"
+       extraction regex: "(\\d+)"
+  - name: label
+    kind: label
+    size: 4
+    validation regex: "^#\\w+$"
+    extraction regex: "\\w+"
+  - name: memory
+    kind: indexed
+    source before offset: true
+    regex: "(.*?)\\[(.*?)\\]"
+    valid left hand types:
+      - label
+    valid right hand types:
+      - literal
+
+instructions:
+  - name: put
+    byte sequence: 0x02
+    size: 4
+    arguments:
+      destination: register
+      value: memory
+  - name: freeze
+    arguments:
+      thing to freeze: register
+    byte sequence:
+      - literal: 0x1
+        size: 4
+      - path: thing to freeze
+        size: 4
+      - literal: 0x0
+        size: 8
+  - name: .data
+    kind: meta
+    instructions:
+      - name: .data1
+        byte sequence: 0x0
+        size: 0
+        arguments:
+          data0: literal
+      - name: .data2
+        byte sequence: 0x0
+        size: 0
+        arguments:
+          data0: literal
+          data1: literal
+  - name: goto
+    arguments:
+      thing to goto: label
+    byte sequence:
+      - literal: 0x1
+        size: 4
+      - literal: 0x0
+        size: 4
+      - path: thing to goto
+        size: 4
+      - literal: 0x0
+        size: 4

@@ -22,7 +22,7 @@ class LiteralReferenceFactory(override val type: String,
         val match = literalExtractionRegex.find(reference)
 
         if (match != null) {
-            return LiteralReference(literalType.convertValue(match.groups[0]!!.value, literalSize))
+            return LiteralReference(literalType.convertValue(match.groups[1]!!.value, literalSize))
         } else {
             throw DataSourceParseError("Error converting the literal '$reference' into a $literalType")
         }

@@ -17,7 +17,7 @@ enum class LiteralType {
 
     HEXADECIMAL {
         override fun convertValue(value: String, size: Int): SizedByteArray {
-            return SizedByteArray(BigInteger(value, 16).toByteArray(), size)
+            return SizedByteArray(BigInteger(value.toLowerCase(), 16).toByteArray(), size)
         }
     },
 

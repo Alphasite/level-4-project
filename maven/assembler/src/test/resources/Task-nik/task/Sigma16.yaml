@@ -24,6 +24,13 @@ references:
         validation regex: "\\d+"
         extraction regex: "(\\d+)"
 
+      - name: bin4
+        kind: literal
+        literal type: BINARY
+        literal size: 4
+        validation regex: "|\\d+|"
+        extraction regex: "|(\\d+)|"
+
   - name: literal16
     kind: meta
     references:
@@ -81,12 +88,22 @@ references:
 instructions:
 
   - name: add
-    byte sequence: 0x00
-    size: 4
-    arguments:
-      destination: register
-      lhs: register
-      rhs: register
+    kind: meta
+    instructions:
+      - name: add r
+        byte sequence: 0x00
+        size: 4
+        arguments:
+          destination: register
+          lhs: register
+          rhs: register
+      - name: add r
+        byte sequence: 0x00
+        size: 4
+        arguments:
+          destination: register
+          lhs: literal
+          rhs: register
 
   - name: sub
     byte sequence: 0x01
@@ -205,18 +222,6 @@ instructions:
       destination: register
       address: memory
 
-  - name: load
-    byte sequence:
-      - literal: 0xF
-        size: 4
-      - path: destination
-      - path: address.offset
-      - literal: 0x1
-        size: 4
-      - path: address.source
-    arguments:
-      destination: register
-      address: memory
 
   - name: store
     byte sequence:
@@ -283,6 +288,25 @@ instructions:
       source address: register
       address: memory
 
+  - name: data
+    byte sequence: 0x0
+    size: 0
+    arguments:
+      value: literal16
+
+  - name: load
+    byte sequence:
+      - literal: 0xF
+        size: 4
+      - path: destination
+      - path: address.offset
+      - literal: 0x1
+        size: 4
+      - path: address.source
+    arguments:
+      destination: register
+      address: memory
+
   - name: loadxi
     byte sequence:
       - literal: 0xF
@@ -296,8 +320,3 @@ instructions:
       destination: register
       address: memory
 
-  - name: data
-    byte sequence: 0x0
-    size: 0
-    arguments:
-      value: literal16

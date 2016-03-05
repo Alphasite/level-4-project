@@ -5,14 +5,10 @@ package com.nishadmathur.errors
  * Date: 24/10/2015
  * Time: 15:08
  */
-open class ParserError(message: String, val line: String?, val lineNumber: Int?) : Exception(message) {
-
-    constructor(message: String) : this(message, null, null)
+open class ParserError(message: String) : Exception(message) {
 
     override fun toString(): String {
-        return "An error occurred while parsing line in the configuration: \n\t" +
-            "$lineNumber '$line' \n\n" +
-            "Producing the error:\n\t" +
+        return "An error occurred while parsing the configuration; producing the error:\n\t" +
             "${super.message}\n\n" +
             super.toString() +
             "\n"

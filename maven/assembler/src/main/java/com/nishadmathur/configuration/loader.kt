@@ -31,12 +31,12 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
     when (config) {
         is Map<*, *> -> {
             val configurationMap = config["configuration"] as? Map<*, *>
-                ?: throw IncompleteDeclarationParserError("Configuration is missing or malformed.")
+                ?: throw IncompleteDeclarationParserError("Configuration block is missing or malformed.")
 
             configuration = parseConfiguration(configurationMap)
 
             val referenceMap = config["references"] as? List<*>
-                ?: throw IncompleteDeclarationParserError("Reference declaration is missing or malformed.")
+                ?: throw IncompleteDeclarationParserError("Reference block is missing or malformed.")
 
             val rawInstructionFormats = (config["instruction formats"] as? Map<*, *>)
 
@@ -49,7 +49,7 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
             referenceFactories = parseReference(referenceMap, configuration)
 
             val instructionMap = config.get<Any?, Any?>("instructions" as Any?) as? List<*>
-                ?: throw IncompleteDeclarationParserError("Instruction declaration is incomplete or malformed.")
+                ?: throw IncompleteDeclarationParserError("Instruction block is missing or malformed.")
 
             instructionFactories = parseInstructions(
                 instructionMap,
