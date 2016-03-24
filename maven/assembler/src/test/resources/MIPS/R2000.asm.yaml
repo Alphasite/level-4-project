@@ -5,7 +5,6 @@ configuration:
   label regex: "^(\\w+):"
   argument separator: ",\\s*"
   comment regex: "#.*"
-  start offset: 0x00400000
 
 segments:
   - name: .data

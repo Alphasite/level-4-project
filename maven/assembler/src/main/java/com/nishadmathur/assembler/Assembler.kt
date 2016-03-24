@@ -55,7 +55,7 @@ class Assembler(
         }
 
     init {
-        configuration.segments.put("default", Segment("default", 0, Regex("^.default$")))
+        configuration.segments.put("default", Segment("default", configuration.startOffset, Regex("^.default$")))
     }
 
     override val raw: SizedByteArray get() {
