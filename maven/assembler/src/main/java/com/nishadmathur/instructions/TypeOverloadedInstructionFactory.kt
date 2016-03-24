@@ -12,8 +12,10 @@ import java.io.Serializable
  * Date: 13/10/2015
  * Time: 15:37
  */
-class TypePolymorphicInstructionFactory(override val identifier: String,
-                                        val factories: Collection<InstructionFactory>) : InstructionFactory, Serializable {
+class TypeOverloadedInstructionFactory(
+    override val identifier: String,
+    val factories: Collection<InstructionFactory>
+) : InstructionFactory, Serializable {
 
     override val help: String
         get() = throw UnsupportedOperationException()
@@ -74,7 +76,7 @@ class TypePolymorphicInstructionFactory(override val identifier: String,
 
             val instructionFactories = instructions.map { TypedInstructionFactory.parse(it, referenceFactories, instructionFormats, configuration) }
 
-            return TypePolymorphicInstructionFactory(name, instructionFactories)
+            return TypeOverloadedInstructionFactory(name, instructionFactories)
         }
     }
 }

@@ -2,68 +2,73 @@ configuration:
   line can start with label: true
   label bit size: 16
   word size: 16
-  label regex: "^(\\w+)"
+  label regex: "^(\\w+):"
   argument separator: ",\\s*"
-  comment regex: ";.*"
+  comment regex: "#.*"
+  start offset: 0x00400008
 
 references:
-  - name: literal4
+  - name: literal
     kind: meta
     references:
-      - name: hexadecimal
-        kind: literal
-        literal type: HEXADECIMAL
-        literal size: 4
-        validation regex: "0x\\d+"
-        extraction regex: "0x(\\d+)"
+      - name: literal4
+        kind: meta
+        references:
+          - name: hexadecimal
+            kind: literal
+            literal type: HEXADECIMAL
+            literal size: 4
+            validation regex: "0x\\d+"
+            extraction regex: "0x(\\d+)"
 
-      - name: int4
-        kind: literal
-        literal type: INTEGER
-        literal size: 4
-        validation regex: "\\d+"
-        extraction regex: "(\\d+)"
+          - name: int4
+            kind: literal
+            literal type: INTEGER
+            literal size: 4
+            validation regex: "\\d+"
+            extraction regex: "(\\d+)"
 
-  - name: literal16
-    kind: meta
-    references:
-      - name: hexadecimal
-        kind: literal
-        literal type: HEXADECIMAL
-        literal size: 16
-        validation regex: "0x\\d+"
-        extraction regex: "0x(\\d+)"
+      - name: literal16
+        kind: meta
+        references:
+          - name: hexadecimal
+            kind: literal
+            literal type: HEXADECIMAL
+            literal size: 16
+            validation regex: "0x\\d+"
+            extraction regex: "0x(\\d+)"
 
-      - name: int4
-        kind: literal
-        literal type: INTEGER
-        literal size: 16
-        validation regex: "(\\+|-)?\\d+"
-        extraction regex: "((\\+|-)?\\d+)"
+          - name: int4
+            kind: literal
+            literal type: INTEGER
+            literal size: 16
+            validation regex: "(\\+|-)?\\d+"
+            extraction regex: "((\\+|-)?\\d+)"
 
-  - name: register
-    kind: meta
-    references:
-      - name: general purpose register
-        kind: mapped
-        size: 5
-        range:
-          format string: "[R|r]{0}"
-          start index: 0
-          start literal: 0
-          count: 31
-      - name: zero register
-        kind: mapped
-        size: 5
-        mappings:
-          "R0": 0x0
-          "r0": 0x0
+      - name: register
+        kind: meta
+        references:
+          - name: general purpose register
+            kind: mapped
+            size: 5
+            range:
+              format string: "${0}"
+              start index: 0
+              start literal: 0
+              count: 32
 
   - name: label
     kind: label
     size: 16
-    validation regex: "^\\w+$"
+    validation regex: "^\\$\\w+$"
     extraction regex: "\\w+"
+
+  - name: pc relative label
+    kind: label
+    size: 16
+    validation regex: "^\\$\\w+$"
+    extraction regex: "\\w+"
+    addressing mode: pc
 
   - name: memory
     kind: indexed
@@ -71,7 +76,7 @@ references:
     regex: "(.*?)\\((.*?)\\)"
     valid left hand types:
       - literal16
-#      - label # TODO fix this.
+      - label
     valid right hand types:
       - register
 
@@ -279,28 +284,60 @@ instructions:
 
 
   - name: lb
-    arguments:
-      destination: register
-      offset: register
-      address: literal
-    byte sequence:
-      - literal: 0x20
-        size: 6
-      - path: offset
-      - path: destination
-      - path: address
+    kind: meta
+    instructions:
+      - name: lbr
+        arguments:
+          destination: register
+          offset: register
+          address: literal
+        byte sequence:
+          - literal: 0x20
+            size: 6
+          - path: offset
+          - path: destination
+          - path: address
+      - name: lbm
+        arguments:
+          destination: register
+          address: memory
+        byte sequence:
+          - literal: 0x20
+            size: 6
+          - path: address.offset
+            size: 5
+          - path: destination
+            size: 5
+          - path: address.source
+            size: 16
 
   - name: lbu
-    arguments:
-      destination: register
-      offset: register
-      address: literal
-    byte sequence:
-      - literal: 0x24
-        size: 6
-      - path: offset
-      - path: destination
-      - path: address
+    kind: meta
+    instructions:
+      - name: lbu
+        arguments:
+          destination: register
+          offset: register
+          address: literal
+        byte sequence:
+          - literal: 0x24
+            size: 6
+          - path: offset
+          - path: destination
+          - path: address
+      - name: lbu
+        arguments:
+          destination: register
+          address: memory
+        byte sequence:
+          - literal: 0x24
+            size: 6
+          - path: address.offset
+            size: 5
+          - path: destination
+            size: 5
+          - path: address.source
+            size: 16
 
   - name: lwcz
     arguments:
@@ -308,7 +345,7 @@ instructions:
       offset: register
       address: literal
     byte sequence:
-      - literal: 0x3z
+      - literal: 0x3
         size: 6
       - path: offset
       - path: destination
@@ -497,7 +534,7 @@ instructions:
       coprocessor: register
       control: register
     byte sequence:
-      - literal: 0x1z
+      - literal: 0x1
         size: 6
       - literal: 0x0
         size: 5
@@ -513,7 +550,7 @@ instructions:
       control: register
       coprocessor: register
     byte sequence:
-      - literal: 0x1z
+      - literal: 0x1 #changed
         size: 6
       - literal: 0x4
         size: 5
@@ -583,7 +620,7 @@ instructions:
 
   - name: xor
     arguments:
-     destination: register
+      destination: register
       lhs: register
       rhs: register
     byte sequence:
@@ -689,7 +726,7 @@ instructions:
  # Bitwise Shift
  # ---------------------------------------------------------------------------
 
-- name: sll
+  - name: sll
     arguments:
       destination: register
       lhs: register
@@ -793,7 +830,7 @@ instructions:
     arguments:
       destination: literal
     byte sequence:
-      - literal: 0x1z
+      - literal: 0x1 #changed
         size: 6
       - literal: 0x8
         size: 5
@@ -806,7 +843,7 @@ instructions:
     arguments:
       destination: literal
     byte sequence:
-      - literal: 0x1z
+      - literal: 0x1 #changed
         size: 6
       - literal: 0x8
         size: 5
@@ -998,7 +1035,7 @@ instructions:
     byte sequence:
       - literal: 0x0
         size: 6
-      - literal: 0x1
+      - literal: 0x0
         size: 5
       - literal: 0x0
         size: 5
@@ -1035,3 +1072,22 @@ instructions:
         size: 5
       - literal: 0x0
         size: 6
+
+  - name: .byte
+    kind: meta
+    instructions:
+      - name: .byte1
+        arguments:
+          a: literal
+        byte sequence:
+          - path: a
+            size: 8
+      - name: .byte2
+        arguments:
+          a: literal
+          b: literal
+        byte sequence:
+          - path: a
+            size: 8
+          - path: b
+            size: 8

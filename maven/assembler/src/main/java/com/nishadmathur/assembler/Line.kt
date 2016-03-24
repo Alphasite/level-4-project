@@ -39,9 +39,12 @@ class Line(val lineNumber: Int, val line: String) {
         instructionFactory: InstructionFactory,
         labelTable: IdentifierTable
     ) {
+        if (line.length == 0) {
+            return
+        }
 
         comment = configuration.commentRegex.find(line)?.value
-        var body = configuration.commentRegex.replace(line, "")
+        var body = configuration.commentRegex.replace(line, "").trim()
 
         val label = configuration.labelRegex.find(body)?.groups?.get(1)?.value
         body = configuration.labelRegex.replace(body, "")
@@ -61,16 +64,17 @@ class Line(val lineNumber: Int, val line: String) {
 
             val name = instructionSection.substringBefore(" ")
 
-            val instructionSegments = instructionSection.substringAfter(" ")
+            val instructionSegments = instructionSection.replace("$name", "").trim()
                 .split(configuration.argumentSeparator)
                 .map { it.trim() }
                 .filter { it.length > 0 }
 
-            if (instructionSegments.size > 0) {
+            // This needs to be investigated and potentially fixed in the future.
+//            if (instructionSegments.size > 0) {
                 this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)
-            } else {
-                throw LineParseError("Error parsing the instruction segment of line: '$line'")
-            }
+//            } else {
+//                throw LineParseError("Error parsing the instruction segment of line: '$line'")
+//            }
         }
     }
 

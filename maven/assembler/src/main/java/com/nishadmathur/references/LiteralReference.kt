@@ -12,6 +12,8 @@ class LiteralReference(override val raw: SizedByteArray) : Reference {
     override val size: Int
         get() = raw.bitSize
 
+    override var offset: SizedByteArray? = null
+
     override fun resolvePath(path: String): SizedByteArray {
         return if (path == "") {
             this.raw

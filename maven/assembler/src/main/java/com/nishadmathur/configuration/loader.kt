@@ -6,10 +6,11 @@ import com.nishadmathur.errors.InvalidOption
 import com.nishadmathur.errors.MalformedDeclaration
 import com.nishadmathur.instructions.InstructionFactory
 import com.nishadmathur.instructions.MetaInstructionFactory
-import com.nishadmathur.instructions.TypePolymorphicInstructionFactory
+import com.nishadmathur.instructions.TypeOverloadedInstructionFactory
 import com.nishadmathur.instructions.TypedInstructionFactory
 import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.*
+import com.nishadmathur.util.decode
 import org.yaml.snakeyaml.Yaml
 import java.io.Reader
 import java.util.*
@@ -46,7 +47,7 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
                 instructionFormats = mapOf()
             }
 
-            referenceFactories = parseReference(referenceMap, configuration)
+            referenceFactories = parseReference(referenceMap, mapOf(), configuration)
 
             val instructionMap = config.get<Any?, Any?>("instructions" as Any?) as? List<*>
                 ?: throw IncompleteDeclarationParserError("Instruction block is missing or malformed.")
@@ -74,6 +75,7 @@ class Configuration(val identifierBitSize: Long,
                     val wordSizeBits: Int,
                     val smallSegmentSize: Int?,
                     val largeSegmentSize: Int?,
+                    val startOffset: Long,
                     val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
 ) {
 
@@ -86,6 +88,7 @@ class Configuration(val identifierBitSize: Long,
             wordSizeBits,
             smallSegmentSize,
             largeSegmentSize,
+            startOffset,
             labelTable.childTable
         )
 }
@@ -104,6 +107,9 @@ fun parseConfiguration(config: Map<*, *>): Configuration {
 
     val commentRegex = (config["comment regex"] as? String)?.toRegex()
         ?: throw InvalidOption("comment regex", config)
+
+    val startOffset = (config["start offset"] as? Any).toString().decode()
+        ?: 0
 
     val (smallSegmentSize, largeSegmentSize) = if ("endian change" in config) {
         val endianSwitch = (config["endian change"] as? Map<*, *>)?.map {
@@ -128,27 +134,32 @@ fun parseConfiguration(config: Map<*, *>): Configuration {
         commentRegex,
         wordSize,
         smallSegmentSize,
-        largeSegmentSize
+        largeSegmentSize,
+        startOffset
     )
 
     return configuration
 }
 
-fun parseReference(config: List<*>, configuration: Configuration): Map<String, ReferenceFactory> {
+fun parseReference(config: List<*>, referenceFactories: Map<String, ReferenceFactory>, configuration: Configuration): Map<String, ReferenceFactory> {
     val references = HashMap<String, ReferenceFactory>()
 
     for (value in config) {
-        val map = value as? Map<*, *> ?: throw MalformedDeclaration("Every child of References should be a map.")
-        val name = map["name"] as? String ?: throw MalformedDeclaration("Field name must be a non-null string.")
-        val kind = map["kind"] as? String ?: throw MalformedDeclaration("Field kind must be a non-null string.")
+        if (value is String) {
+            references[value] = referenceFactories[value] ?: throw InvalidOption("reference type", value)
+        } else {
+            val map = value as? Map<*, *> ?: throw MalformedDeclaration("Every child of References should be a map.")
+            val name = map["name"] as? String ?: throw MalformedDeclaration("Field name must be a non-null string.")
+            val kind = map["kind"] as? String ?: throw MalformedDeclaration("Field kind must be a non-null string.")
 
-        when (kind) {
-            "meta" -> references.putAll(MetaReferenceFactory.parse(map, references, configuration))
-            "indexed" -> references[name] = IndexedReferenceFactory.parse(map, references, configuration)
-            "label" -> references[name] = LabelReferenceFactory.parse(map, references, configuration)
-            "literal" -> references[name] = LiteralReferenceFactory.parse(map, references, configuration)
-            "mapped" -> references[name] = MappedReferenceFactory.parse(map, references, configuration)
-            else -> throw InvalidOption("kind", kind.toString())
+            when (kind) {
+                "meta" -> references.putAll(MetaReferenceFactory.parse(map, references, configuration))
+                "indexed" -> references[name] = IndexedReferenceFactory.parse(map, references, configuration)
+                "label" -> references[name] = LabelReferenceFactory.parse(map, references, configuration)
+                "literal" -> references[name] = LiteralReferenceFactory.parse(map, references, configuration)
+                "mapped" -> references[name] = MappedReferenceFactory.parse(map, references, configuration)
+                else -> throw InvalidOption("kind", kind.toString())
+            }
         }
     }
 
@@ -168,7 +179,7 @@ fun parseInstructions(
         val kind = map["kind"] as? String ?: "instruction"
 
         val instruction = when (kind) {
-            "meta" -> TypePolymorphicInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
+            "meta" -> TypeOverloadedInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
             "instruction" -> TypedInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
             else -> throw InvalidOption("kind", kind.toString())
         }

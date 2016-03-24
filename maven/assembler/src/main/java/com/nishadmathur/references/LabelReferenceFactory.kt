@@ -15,7 +15,8 @@ class LabelReferenceFactory(override val type: String,
                             val labelTable: IdentifierTable,
                             val size: Int,
                             labelRegex: Regex,
-                            labelExtractionRegex: Regex) : ReferenceFactory, Serializable {
+                            labelExtractionRegex: Regex,
+                            val addressingMode: AddressingModes) : ReferenceFactory, Serializable {
 
     private val memoryRegex = labelRegex
     private val memoryExtractionRegex = labelExtractionRegex
@@ -27,7 +28,7 @@ class LabelReferenceFactory(override val type: String,
     override fun getInstanceIfIsMatch(reference: String): LabelReference {
         if (checkIsMatch(reference)) {
             val label = memoryExtractionRegex.find(reference)
-            return LabelReference(label!!.groups[0]!!.value, labelTable, size)
+            return LabelReference(label!!.groups[0]!!.value, labelTable, addressingMode, size)
         } else {
             throw DataSourceParseError("Error extracting label from $reference")
         }
@@ -47,13 +48,24 @@ class LabelReferenceFactory(override val type: String,
             val labelExtractionRegex: Regex = (properties["extraction regex"] as? String)?.toRegex()
                 ?: throw InvalidOption("extraction regex", properties["extraction regex"])
 
+            val addressingMode: AddressingModes = when ((properties["addressing mode"] ?: "global") as? String) {
+                "global" -> AddressingModes.global
+                "pc" -> AddressingModes.pc_relative
+                else -> throw InvalidOption("addressing mode", properties)
+            }
+
             return LabelReferenceFactory(
                 type,
                 configuration.labelTable,
                 size,
                 labelRegex,
-                labelExtractionRegex
+                labelExtractionRegex,
+                addressingMode
             )
         }
     }
+}
+
+enum class AddressingModes {
+    global, pc_relative
 }

@@ -1,6 +1,7 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.errors.PathResolutionError
+import com.nishadmathur.util.OffsetAssignable
 import com.nishadmathur.util.SizedByteArray
 
 /**
@@ -8,27 +9,42 @@ import com.nishadmathur.util.SizedByteArray
  * Date: 04/10/2015
  * Time: 20:49
  */
-class IndexedReference(val source: Reference, val offset: Reference, val sourceBeforeOffset: Boolean) : Reference {
+class IndexedReference(
+    val sourceReference: Reference,
+    val offsetReference: Reference,
+    val sourceBeforeOffset: Boolean
+) : Reference {
+
+    override var offset: SizedByteArray? = null
+        set(offset) {
+            field = offset
+
+            for (argument in arrayOf(sourceReference, offsetReference)) {
+                if (argument is OffsetAssignable) {
+                    argument.offset = offset
+                }
+            }
+        }
 
     override val size: Int
-        get() = source.raw.bitSize + offset.raw.bitSize
+        get() = sourceReference.raw.bitSize + offsetReference.raw.bitSize
 
     override val raw: SizedByteArray
         get() {
             if (sourceBeforeOffset) {
-                return SizedByteArray.join(listOf(source.raw, offset.raw))
+                return SizedByteArray.join(listOf(sourceReference.raw, offsetReference.raw))
             } else {
-                return SizedByteArray.join(listOf(offset.raw, source.raw))
+                return SizedByteArray.join(listOf(offsetReference.raw, sourceReference.raw))
             }
         }
 
     override fun resolvePath(path: String): SizedByteArray {
         return when (path) {
-            "source" -> source.raw
-            "offset" -> offset.raw
+            "source" -> sourceReference.raw
+            "offset" -> offsetReference.raw
             else -> throw PathResolutionError(path)
         }
     }
 
-    override fun toString(): String = "$source[$offset]#$raw"
+    override fun toString(): String = "$sourceReference[$offsetReference]#$raw"
 }

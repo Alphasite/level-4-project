@@ -14,15 +14,29 @@ import java.util.*
  * Date: 12/10/2015
  * Time: 09:08
  */
-class Assembler(val configuration: Configuration, val instructionFactory: InstructionFactory, val identifierTable: IdentifierTable) {
+class Assembler(
+    val configuration: Configuration,
+    val instructionFactory: InstructionFactory,
+    val identifierTable: IdentifierTable
+): RawLiteralConvertible {
+
     val lines = ArrayList<Line>()
-    var offset: Long = 0
+    var offset: Long = configuration.startOffset
+
+    var compiledArray = SizedByteArray(0.toByteArray(), 0)
 
     val listings: String
         get() {
             val maxLineNumberLength = ceil(log10(lines.map { it.lineNumber }.max()?.toDouble() ?: 0.0)).toInt()
 
-            val hexLines = lines.map { it.instruction?.raw?.hex ?: "" }
+            val hexLines = lines.map {
+                val instruction = it.instruction
+                instruction
+                    ?.raw
+                    ?.hex
+                    ?.padStart(Math.ceil(instruction.size / 4.0).toInt(), '0')
+                    ?: ""
+            }
 
             val maxLength = hexLines.map { it.length }.max() ?: 0
 
@@ -32,6 +46,10 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
                 "$lineNumber | ${hex.padEnd(maxLength)} | ${line.line}"
             }.joinToString("\n")
         }
+
+    override val raw: SizedByteArray get() {
+        return compiledArray
+    }
 
     fun loadFile(file: Scanner) {
         file.use {
@@ -43,9 +61,9 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
             }
 
             for (i in 0 until stringLines.size) {
-                if (stringLines[i].length > 0) {
+//                if (stringLines[i].length > 0) {
                     lines.add(Line(i, stringLines[i]))
-                }
+//                }
             }
         }
 
@@ -67,16 +85,13 @@ class Assembler(val configuration: Configuration, val instructionFactory: Instru
             .filterNotNull()
             .filter { it.bitSize > 0 }
 
-        println("Listings:")
-        println(listings)
-        println()
+        compiledArray = SizedByteArray.join(instructionBytes)
 
-        val bytes = SizedByteArray.join(instructionBytes)
         if (isTopLevel && configuration.smallSegmentSize != null && configuration.largeSegmentSize != null) {
-            return bytes.reverseEndianess(configuration.smallSegmentSize, configuration.largeSegmentSize)
-        } else {
-            return bytes
+            compiledArray = compiledArray.reverseEndianess(configuration.smallSegmentSize, configuration.largeSegmentSize)
         }
+
+        return compiledArray
     }
 
     fun calculateOffsets(lines: List<Line>): List<Line> {

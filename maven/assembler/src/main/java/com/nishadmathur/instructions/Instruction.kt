@@ -2,6 +2,7 @@ package com.nishadmathur.instructions
 
 import com.nishadmathur.assembler.RawLiteralConvertible
 import com.nishadmathur.references.Reference
+import com.nishadmathur.util.OffsetAssignable
 import com.nishadmathur.util.SizedByteArray
 
 /**
@@ -9,9 +10,11 @@ import com.nishadmathur.util.SizedByteArray
  * Date: 05/10/2015
  * Time: 09:04
  */
-interface Instruction : RawLiteralConvertible {
+interface Instruction : RawLiteralConvertible, OffsetAssignable {
     val size: Int
     val arguments: Map<String, Reference>
-    var offset: SizedByteArray? set
+
+    override var offset: SizedByteArray?
+
     override fun toString(): kotlin.String
 }

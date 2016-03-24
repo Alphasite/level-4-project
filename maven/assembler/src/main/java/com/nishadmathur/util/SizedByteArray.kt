@@ -60,21 +60,22 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
         return SizedByteArray.join(this, SizedByteArray(ByteArray(1), 4))
     }
 
-    // TODO check this to make sure it works...
     fun range(min: Int = 0, max: Int = bitSize): SizedByteArray {
-        val bitsToSkip: Int = min % 8
-        val bytesToSkip: Int = min - bitsToSkip
 
-        val byteStream = ByteArrayOutputStream()
+        val binaryString = byteArray
+                .map { it.toInt() }
+                .map { Integer.toBinaryString(it) }
+                .map { it.substring(21, 32) }
+                .joinToString("")
+                .substring(min, max)
+                .padStart(Math.ceil((max - min) / 8.0).toInt() * 8)
 
-        for (i in 0 until Math.ceil(max / 8.0).toInt()) {
-            val previous: Int = currentByte(byteArray, bitSize, i - 1, bytesToSkip).first.toInt()
-            val current: Int = currentByte(byteArray, bitSize, i, bytesToSkip).first.toInt()
-            val result = (current ushr bitsToSkip) and (previous shl (8 - bitsToSkip))
-            byteStream.write(result)
-        }
+        val byteArray = binaryString.splitEqually(8)
+            .map { Integer.parseInt(it, 2) }
+            .map { it.toByte() }
+            .toByteArray()
 
-        return SizedByteArray(byteStream.toByteArray(), max - min)
+        return SizedByteArray(byteArray, max - min)
     }
 
     fun reverseEndianess(smallSegmentSize: Int, largeSegmentSize: Int): SizedByteArray {
@@ -86,7 +87,7 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
             string += "0".repeat(this.bitSize % largeSegmentSize)
             System.err.println(
                 "Warning, the reverseEndianess function encountered a " +
-                "non aligned word, it is being padded by 0's to the correct length."
+                    "non aligned word, it is being padded by 0's to the correct length."
             )
         }
 
@@ -119,53 +120,22 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
         fun join(byteArrays: List<SizedByteArray>): SizedByteArray {
             var totalSize = byteArrays.map { it.bitSize }.sum()
 
-            val byteStream = ByteArrayOutputStream();
+            val binaryString = byteArrays.map {
+                it.byteArray
+                    .map { it.toInt() }
+                    .map { Integer.toBinaryString(it) }
+                    .map { it.padStart(8, '0') }
+                    .map { it.substring(it.length - 8, it.length) }
+                    .joinToString("")
+                    .substring(it.byteArray.size * 8 - it.bitSize)
+            }.joinToString("").padStart(Math.ceil(totalSize / 8.0).toInt() * 8)
 
-            var byte: Byte = 0
+            val byteArray = binaryString.splitEqually(8)
+                .map { Integer.parseInt(it, 2) }
+                .map { it.toByte() }
+                .toByteArray()
 
-            // This buffer needs to start a few bits right shifted, so that whole array is right aligned, not left.
-            var currentByteBitsRead = (8 - (totalSize % 8)) % 8// i.e. XX11 0011 instead of 1100 11XX
-
-            for (i in 0 until byteArrays.size) {
-                val byteArray = byteArrays[i].byteArray
-                val bitSize = byteArrays[i].bitSize
-                val bytesToSkip = byteArray.size - Math.ceil(bitSize / 8.0).toInt()
-
-                for (j in bytesToSkip until byteArray.size) {
-                    var (word, length) = currentByte(byteArray, bitSize, j, bytesToSkip)
-
-                    if (bitSize < 8 && currentByteBitsRead != 0) {
-                        word = (word.toInt() shl (8 - bitSize)).toByte()
-                    }
-
-                    byte = ((byte.toInt() shl (8 - currentByteBitsRead)) or (word.toInt() ushr currentByteBitsRead)).toByte()
-
-                    currentByteBitsRead += length
-
-                    if (currentByteBitsRead >= 8) {
-                        byteStream.write(byteArrayOf(byte))
-                        currentByteBitsRead %= 8
-                        byte = word
-                    }
-                }
-            }
-
-            if (currentByteBitsRead > 0) {
-                byteStream.write(byteArrayOf(byte))
-            }
-
-            return SizedByteArray(byteStream.toByteArray(), totalSize)
-        }
-
-        fun currentByte(byteArray: ByteArray, bitSize: Int, offset: Int, bytesToSkip: Int): Pair<Byte, Int> {
-            if (offset >= 0) {
-                return Pair(byteArray[offset], bytesToSkip * 8 + bitSize - offset * 8)
-            } else {
-                return Pair(
-                    0.toByte(),
-                    8 - Math.abs(Math.abs(byteArray.size * 8 - bitSize) + offset * 8) % 8
-                )
-            }
+            return SizedByteArray(byteArray, totalSize)
         }
     }
 }

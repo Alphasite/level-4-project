@@ -85,6 +85,7 @@ class TypedInstructionFactory(
             val instructionFormat: InstructionFormat
             
             val rawArguments = properties["arguments"] as? Map<*, *>
+                ?: if (properties["arguments"] == null) { HashMap<Any, Any>() } else { null }
                 ?: throw InvalidOption("arguments", properties["arguments"])
             
             val rawAliases = (properties["aliases"] as? Map<*, *>)

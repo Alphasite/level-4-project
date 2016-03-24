@@ -2,6 +2,7 @@ package com.nishadmathur.util
 
 import com.nishadmathur.errors.InvalidOption
 import java.nio.ByteBuffer
+import java.util.*
 
 /**
  * User: nishad
@@ -9,8 +10,24 @@ import java.nio.ByteBuffer
  * Time: 12:38
  */
 
-fun String.decode(): Long {
-    return java.lang.Long.decode(this)
+fun String.decode(): Long? {
+    try {
+        return java.lang.Long.decode(this)
+    } catch (e: NumberFormatException) {
+        return null
+    }
+}
+
+fun String.splitEqually(size: Int): List<String> {
+    var subStrings = ArrayList<String>((this.length + size - 1) / size)
+
+    var start = 0
+    while (start < this.length) {
+        subStrings.add(this.substring(start, Math.min(this.length, start + size)))
+        start += size
+    }
+
+    return subStrings
 }
 
 fun Int.toByteArray(): ByteArray {

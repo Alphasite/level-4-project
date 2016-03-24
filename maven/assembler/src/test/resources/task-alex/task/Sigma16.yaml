@@ -289,15 +289,3 @@ instructions:
     arguments:
       value: literal16
 
-  - name: load
-    byte sequence:
-      - literal: 0xF
-        size: 4
-      - path: destination
-      - path: address.offset
-      - literal: 0x1
-        size: 4
-      - path: address.source
-    arguments:
-      destination: register
-      address: memory

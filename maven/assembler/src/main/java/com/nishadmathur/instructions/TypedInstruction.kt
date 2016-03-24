@@ -2,6 +2,7 @@ package com.nishadmathur.instructions
 
 import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.Reference
+import com.nishadmathur.util.OffsetAssignable
 import com.nishadmathur.util.SizedByteArray
 
 /**
@@ -14,6 +15,15 @@ class TypedInstruction(
     val instructionFormat: InstructionFormat
 ) : Instruction {
     override var offset: SizedByteArray? = null
+        set(value) {
+            field = value
+
+            for (argument in arguments.values) {
+                if (argument is OffsetAssignable) {
+                    argument.offset = value
+                }
+            }
+        }
 
     override val raw: SizedByteArray
         get() = instructionFormat.applyTo(arguments)

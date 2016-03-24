@@ -7,10 +7,16 @@
 # What do you think is missing in the program?
 - 
 
-# What do you absolutely not like in the documentation?
+# What do you like in the documentation?
 - 
 
-# What do you absolutely not like in the program?
+# What do you not like in the documentation?
+- 
+
+# What do you like in the program?
+- 
+
+# What do you not like in the program?
 - 
 
 # Any other comments?

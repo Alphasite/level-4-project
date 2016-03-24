@@ -54,12 +54,10 @@ class MetaReferenceFactory(override val type: String) : ReferenceFactory, Serial
                 ?: throw InvalidOption("name", properties)
 
             val references = (properties["references"] as? List<*>)
-                ?.map { it as? Map<*, *> }
-                ?.requireNoNulls()
                 ?: throw InvalidOption("references", properties)
 
             val meta = MetaReferenceFactory(name)
-            val newReferenceFactories = parseReference(references, configuration) as MutableMap
+            val newReferenceFactories = parseReference(references, referenceFactories, configuration) as MutableMap
 
             newReferenceFactories.values.mapIndexed { i, factory -> meta.addReference(factory, i) }
 

@@ -18,7 +18,7 @@ class SizesByteArrayTest {
 //        throw UnsupportedOperationException()
 //    }
 
-    @Test
+//    @Test
     fun testJoin() {
         val array1 = SizedByteArray(1.toByteArray(), 4)
         val array2 = SizedByteArray(1.toByteArray(), 2)
