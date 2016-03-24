@@ -1,6 +1,8 @@
 package com.nishadmathur.assembler
 
 import com.nishadmathur.configuration.Configuration
+import com.nishadmathur.directives.Segment
+import com.nishadmathur.errors.AmbiguousIdentifierMatch
 import com.nishadmathur.errors.LineParseError
 import com.nishadmathur.instructions.Instruction
 import com.nishadmathur.instructions.InstructionFactory
@@ -16,21 +18,15 @@ class Line(val lineNumber: Int, val line: String) {
     var comment: String? = null
     var label: Label? = null
     var instruction: Instruction? = null
+    var segment: Segment? = null
 
     var offset: SizedByteArray? = null
         set(offset) {
             field = offset
-
-            // TODO implement this.
-            //            if (instruction == null) {
-            //                this.label?.offset = offset + 1 // Otherwise
-            //            } else {
             this.instruction?.offset = offset
             this.label?.offset = offset
-            //            }
         }
 
-    // For what ever reason un-backed fields cant access local fields
     val size: Int
         get() = this.instruction?.size ?: 0
 
@@ -46,12 +42,26 @@ class Line(val lineNumber: Int, val line: String) {
         comment = configuration.commentRegex.find(line)?.value
         var body = configuration.commentRegex.replace(line, "").trim()
 
+        val potentialSegments = configuration.segments.filter { it.value.matcher.containsMatchIn(line) }
+
+        if (potentialSegments.size > 1) {
+            throw AmbiguousIdentifierMatch(potentialSegments.map { it.key }.toList(), "Error occurred when identifying segments.")
+        }
+
+        if (potentialSegments.size == 1) {
+            val segment = potentialSegments.values.first()
+
+            this.segment = segment
+
+            body = segment.matcher.replace(body, "")
+        }
+
         val label = configuration.labelRegex.find(body)?.groups?.get(1)?.value
         body = configuration.labelRegex.replace(body, "")
 
         val arguments = body.split(configuration.labelRegex).filter { it.length > 0 }
 
-        if (label == null && arguments.size == 0 && comment == null) {
+        if (label == null && arguments.size == 0 && comment == null && segment == null) {
             throw LineParseError("Line isn't formatted correctly; $line")
         }
 
@@ -69,12 +79,7 @@ class Line(val lineNumber: Int, val line: String) {
                 .map { it.trim() }
                 .filter { it.length > 0 }
 
-            // This needs to be investigated and potentially fixed in the future.
-//            if (instructionSegments.size > 0) {
-                this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)
-//            } else {
-//                throw LineParseError("Error parsing the instruction segment of line: '$line'")
-//            }
+            this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)
         }
     }
 

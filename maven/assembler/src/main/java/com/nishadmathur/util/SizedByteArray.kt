@@ -50,6 +50,12 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
         assert(byteArray.size >= Math.ceil(bitSize / 8.0).toInt()) { "The array was not sized correctly!" }
     }
 
+    constructor(size: Int) : this (
+        ByteArray(Math.ceil(size / 8.0).toInt()),
+        size,
+        false
+    )
+
     constructor(value: Int, bytes: Collection<Byte>) : this(
         bytes.asSequence().toByteArray(),
         bytes.size * 8,

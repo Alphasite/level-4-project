@@ -1,6 +1,7 @@
 package com.nishadmathur.configuration
 
 import com.nishadmathur.assembler.IdentifierTable
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.IncompleteDeclarationParserError
 import com.nishadmathur.errors.InvalidOption
 import com.nishadmathur.errors.MalformedDeclaration
@@ -34,7 +35,15 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
             val configurationMap = config["configuration"] as? Map<*, *>
                 ?: throw IncompleteDeclarationParserError("Configuration block is missing or malformed.")
 
-            configuration = parseConfiguration(configurationMap)
+            val segmentMap = config["segments"]
+
+            if (segmentMap != null && segmentMap as? List<*> == null) {
+                throw IncompleteDeclarationParserError("Segment block is malformed.")
+            }
+
+            val segments = Segment.parseSegments(segmentMap as? List<*> ?: ArrayList<Any>())
+
+            configuration = parseConfiguration(configurationMap, HashMap(segments))
 
             val referenceMap = config["references"] as? List<*>
                 ?: throw IncompleteDeclarationParserError("Reference block is missing or malformed.")
@@ -68,15 +77,17 @@ fun loadConfiguration(file: Reader): Pair<Configuration, InstructionFactory> {
     return Pair(configuration, instructionFactories)
 }
 
-class Configuration(val identifierBitSize: Long,
-                    val argumentSeparator: Regex,
-                    val labelRegex: Regex,
-                    val commentRegex: Regex,
-                    val wordSizeBits: Int,
-                    val smallSegmentSize: Int?,
-                    val largeSegmentSize: Int?,
-                    val startOffset: Long,
-                    val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
+class Configuration(
+    val identifierBitSize: Long,
+    val argumentSeparator: Regex,
+    val labelRegex: Regex,
+    val commentRegex: Regex,
+    val wordSizeBits: Int,
+    val smallSegmentSize: Int?,
+    val largeSegmentSize: Int?,
+    val startOffset: Long,
+    val segments: MutableMap<String, Segment>,
+    val labelTable: IdentifierTable = IdentifierTable(identifierBitSize)
 ) {
 
     val nestedConfiguration: Configuration
@@ -89,11 +100,12 @@ class Configuration(val identifierBitSize: Long,
             smallSegmentSize,
             largeSegmentSize,
             startOffset,
+            segments,
             labelTable.childTable
         )
 }
 
-fun parseConfiguration(config: Map<*, *>): Configuration {
+fun parseConfiguration(config: Map<*, *>, segments: MutableMap<String, Segment>): Configuration {
     val bitSize = config["label bit size"] as? Int
         ?: throw InvalidOption("label bit size", config)
 
@@ -135,7 +147,8 @@ fun parseConfiguration(config: Map<*, *>): Configuration {
         wordSize,
         smallSegmentSize,
         largeSegmentSize,
-        startOffset
+        startOffset,
+        segments
     )
 
     return configuration

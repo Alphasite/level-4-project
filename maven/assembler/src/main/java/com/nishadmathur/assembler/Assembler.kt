@@ -1,6 +1,7 @@
 package com.nishadmathur.assembler
 
 import com.nishadmathur.configuration.Configuration
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.instructions.InstructionFactory
 import com.nishadmathur.util.SizedByteArray
@@ -21,6 +22,7 @@ class Assembler(
 ): RawLiteralConvertible {
 
     val lines = ArrayList<Line>()
+
     var offset: Long = configuration.startOffset
 
     var compiledArray = SizedByteArray(0.toByteArray(), 0)
@@ -38,14 +40,23 @@ class Assembler(
                     ?: ""
             }
 
-            val maxLength = hexLines.map { it.length }.max() ?: 0
+            val lengthLines = lines.map { it.offset?.hex ?: "" }
 
-            return lines.zip(hexLines).map {
-                val (line, hex) = it
+            val maxHexLength = hexLines.map { it.length }.max() ?: 0
+            val maxLenLength = lengthLines.map{ it.length }.max() ?: 0
+
+            return lines.zip(hexLines).zip(lengthLines).map {
+                val (tup, length) = it
+                val (line, hex) = tup
+
                 val lineNumber = line.lineNumber.toString().padEnd(maxLineNumberLength)
-                "$lineNumber | ${hex.padEnd(maxLength)} | ${line.line}"
+                "$lineNumber | ${length.padEnd(maxLenLength)} | ${hex.padEnd(maxHexLength)} | ${line.line}"
             }.joinToString("\n")
         }
+
+    init {
+        configuration.segments.put("default", Segment("default", 0, Regex("^.default$")))
+    }
 
     override val raw: SizedByteArray get() {
         return compiledArray
@@ -54,16 +65,14 @@ class Assembler(
     fun loadFile(file: Scanner) {
         file.use {
 
-            var stringLines: MutableList<String> = ArrayList()
+            var stringLines = ArrayList<String>()
 
             while (it.hasNextLine()) {
                 stringLines.add(it.nextLine())
             }
 
             for (i in 0 until stringLines.size) {
-//                if (stringLines[i].length > 0) {
-                    lines.add(Line(i, stringLines[i]))
-//                }
+                lines.add(Line(i, stringLines[i]))
             }
         }
 
@@ -78,12 +87,31 @@ class Assembler(
             }
         }
 
-        calculateOffsets(lines)
+        var currentSegment = configuration.segments["default"]!!
+        for (line in lines) {
+            currentSegment = line.segment ?: currentSegment
 
-        var instructionBytes = this.lines
-            .map { annotateError(it) { it.instruction?.raw } }
-            .filterNotNull()
-            .filter { it.bitSize > 0 }
+            currentSegment.lines.add(line)
+        }
+
+        calculateOffsets(configuration.segments.values)
+
+        var orderedSegments = configuration.segments.values.sortedBy { it.offset }
+
+        var segmentsWithPadding = ArrayList<Pair<Segment, SizedByteArray>>()
+
+        for (i in 0 until orderedSegments.size - 1) {
+            val paddingBits = orderedSegments[i + 1].offset - orderedSegments[i].offset + orderedSegments[0].raw.bitSize
+            val padding = SizedByteArray(paddingBits.toInt())
+            segmentsWithPadding.add(Pair(orderedSegments[i], padding))
+        }
+
+        segmentsWithPadding.add(Pair(orderedSegments.last(), SizedByteArray(0)))
+
+        var instructionBytes = segmentsWithPadding
+            .map {
+                listOf(it.first.raw, it.second)
+            }.flatten()
 
         compiledArray = SizedByteArray.join(instructionBytes)
 
@@ -94,19 +122,19 @@ class Assembler(
         return compiledArray
     }
 
-    fun calculateOffsets(lines: List<Line>): List<Line> {
-        var offset: Long = this.offset
-        var offsetLines = arrayListOf<Line>()
+    fun calculateOffsets(segments: Collection<Segment>) {
+        for (segment in segments) {
+            var offset: Long = segment.offset
+            var offsetLines = arrayListOf<Line>()
 
-        for (line in lines) {
-            annotateError(line) {
-                line.offset = SizedByteArray(offset.toByteArray(), configuration.identifierBitSize.toInt())
-                offsetLines.add(line)
-                offset += line.size / configuration.wordSizeBits // Size is bit size not byte size.
+            for (line in segment.lines) {
+                annotateError(line) {
+                    line.offset = SizedByteArray(offset.toByteArray(), configuration.identifierBitSize.toInt())
+                    offsetLines.add(line)
+                    offset += line.size / configuration.wordSizeBits // Size is bit size not byte size.
+                }
             }
         }
-
-        return offsetLines
     }
 
     companion object {

@@ -22,3 +22,4 @@ class MissingOrMalformedSection(message: String) : ParserError(message)
 class InvalidOption(field: String, option: Any?) : ParserError("'$option' is not a valid option for $field or is the wrong type.") {
     constructor(field: String, map: Map<*, *>) : this(field, map[field])
 }
+class AmbiguousIdentifierMatch(identifiers: List<String>, message: String): ParserError("All of '$identifiers' are a potential match for this line. $message")
