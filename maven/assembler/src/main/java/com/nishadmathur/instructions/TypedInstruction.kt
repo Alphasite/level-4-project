@@ -1,5 +1,6 @@
 package com.nishadmathur.instructions
 
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.Reference
 import com.nishadmathur.util.OffsetAssignable
@@ -14,6 +15,13 @@ class TypedInstruction(
     override val arguments: Map<String, Reference>,
     val instructionFormat: InstructionFormat
 ) : Instruction {
+
+    override var segment: Segment? = null
+        set(value) {
+            field = segment
+            this.arguments.mapValues { it.value.segment = segment }
+        }
+
     override var offset: SizedByteArray? = null
         set(value) {
             field = value

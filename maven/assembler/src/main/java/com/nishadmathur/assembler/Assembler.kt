@@ -27,6 +27,8 @@ class Assembler(
 
     var compiledArray = SizedByteArray(0.toByteArray(), 0)
 
+    var defaultSegment: Segment
+
     val listings: String
         get() {
             val maxLineNumberLength = ceil(log10(lines.map { it.lineNumber }.max()?.toDouble() ?: 0.0)).toInt()
@@ -55,7 +57,8 @@ class Assembler(
         }
 
     init {
-        configuration.segments.put("default", Segment("default", configuration.startOffset, Regex("^.default$")))
+        defaultSegment = Segment("default", configuration.startOffset, Regex("^.default$"))
+        configuration.segments.put("default", defaultSegment)
     }
 
     override val raw: SizedByteArray get() {
@@ -87,39 +90,44 @@ class Assembler(
             }
         }
 
-        var currentSegment = configuration.segments["default"]!!
+        var currentSegment = defaultSegment
         for (line in lines) {
             currentSegment = line.segment ?: currentSegment
 
             currentSegment.lines.add(line)
         }
 
-        calculateOffsets(configuration.segments.values)
+        if (isTopLevel) {
+            calculateOffsets(configuration.segments.values)
 
-        var orderedSegments = configuration.segments.values.sortedBy { it.offset }
+            var orderedSegments = configuration.segments.values.sortedBy { it.offset }
 
-        var segmentsWithPadding = ArrayList<Pair<Segment, SizedByteArray>>()
+            var segmentsWithPadding = ArrayList<Pair<Segment, SizedByteArray>>()
 
-        for (i in 0 until orderedSegments.size - 1) {
-            val paddingBits = orderedSegments[i + 1].offset - orderedSegments[i].offset + orderedSegments[0].raw.bitSize
-            val padding = SizedByteArray(paddingBits.toInt())
-            segmentsWithPadding.add(Pair(orderedSegments[i], padding))
+            for (i in 0 until orderedSegments.size - 1) {
+                val paddingBits = orderedSegments[i + 1].offset - orderedSegments[i].offset + orderedSegments[0].raw.bitSize
+                val padding = SizedByteArray(paddingBits.toInt())
+                segmentsWithPadding.add(Pair(orderedSegments[i], padding))
+            }
+
+            segmentsWithPadding.add(Pair(orderedSegments.last(), SizedByteArray(0)))
+
+            var instructionBytes = segmentsWithPadding
+                .map {
+                    listOf(it.first.raw, it.second)
+                }.flatten()
+
+            compiledArray = SizedByteArray.join(instructionBytes)
+
+            if (isTopLevel && configuration.smallSegmentSize != null && configuration.largeSegmentSize != null) {
+                compiledArray = compiledArray.reverseEndianess(configuration.smallSegmentSize, configuration.largeSegmentSize)
+            }
+
+            return compiledArray
+        } else {
+            // Need to figure out a method of displaying listings for macros?!?
+            return SizedByteArray(0) //SizedByteArray.join(lines.map { it.instruction?.raw }.filterNotNull())
         }
-
-        segmentsWithPadding.add(Pair(orderedSegments.last(), SizedByteArray(0)))
-
-        var instructionBytes = segmentsWithPadding
-            .map {
-                listOf(it.first.raw, it.second)
-            }.flatten()
-
-        compiledArray = SizedByteArray.join(instructionBytes)
-
-        if (isTopLevel && configuration.smallSegmentSize != null && configuration.largeSegmentSize != null) {
-            compiledArray = compiledArray.reverseEndianess(configuration.smallSegmentSize, configuration.largeSegmentSize)
-        }
-
-        return compiledArray
     }
 
     fun calculateOffsets(segments: Collection<Segment>) {

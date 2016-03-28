@@ -1,6 +1,7 @@
 package com.nishadmathur.instructions
 
 import com.nishadmathur.assembler.Assembler
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.AssemblerError
 import com.nishadmathur.references.Reference
 import com.nishadmathur.util.SizedByteArray
@@ -17,6 +18,14 @@ class MacroInstruction(
     val assembler: Assembler,
     val macroTemplate: String
 ) : Instruction {
+    override var segment: Segment? = null
+        set(value) {
+            field = value
+
+            if (value != null) {
+                assembler.defaultSegment = value
+            }
+        }
 
     override var offset: SizedByteArray? = null
         set(value) {

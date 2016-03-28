@@ -5,6 +5,7 @@ import com.nishadmathur.configuration.Configuration
 import com.nishadmathur.errors.IncorrectTypeError
 import com.nishadmathur.errors.InstructionParseError
 import com.nishadmathur.errors.InvalidOption
+import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.Reference
 import com.nishadmathur.references.ReferenceFactory
 import java.util.*
@@ -77,5 +78,53 @@ class MacroInstructionFactory(
         } else {
             throw InstructionParseError("$identifier with arguments '${arguments.joinToString("', '")}' could not be parsed correctly, it should be in the form '$help'")
         }
+    }
+
+    companion object: InstructionParser {
+        override fun parse(
+            properties: Map<*, *>,
+            referenceFactories: Map<String, ReferenceFactory>,
+            instructionFormats: Map<String, InstructionFormat>,
+            rootInstructionFactory: InstructionFactory,
+            configuration: Configuration
+        ): InstructionFactory {
+
+            val name = properties["name"] as? String
+                ?: throw InvalidOption("name", properties)
+
+            val template = properties["template"] as? String
+                ?: throw InvalidOption("template", properties)
+
+            val rawArguments = properties["arguments"] as? Map<*, *>
+                ?: if (properties["arguments"] == null) { HashMap<Any, Any>() } else { null }
+                ?: throw InvalidOption("arguments", properties["arguments"])
+
+            val rawAliases = (properties["aliases"] as? Map<*, *>)
+
+            val aliases: Map<String, String> = rawAliases?.map {
+                Pair(
+                    it.key as? String ?: throw InvalidOption(it.key.toString(), rawAliases),
+                    it.value as? String ?: throw InvalidOption(it.key.toString(), rawAliases)
+                )
+            }?.toMap() ?: mapOf()
+
+            val arguments: List<Pair<String, ReferenceFactory>> = rawArguments
+                .map {
+                    val referenceName = it.key as? String ?: throw InvalidOption("arguments.name", it)
+                    val referenceKind = it.value as? String ?: throw InvalidOption("arguments.name", it)
+                    val factory = referenceFactories[referenceKind] ?: throw InvalidOption("arguments.type", it)
+                    Pair(referenceName, factory)
+                }
+
+            return MacroInstructionFactory(
+                identifier = name,
+                instructionFactory = rootInstructionFactory,
+                argumentFactories = arguments,
+                argumentAliases = aliases,
+                configuration = configuration,
+                macroTemplate = template
+            )
+        }
+
     }
 }

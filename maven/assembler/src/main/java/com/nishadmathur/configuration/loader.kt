@@ -5,10 +5,7 @@ import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.IncompleteDeclarationParserError
 import com.nishadmathur.errors.InvalidOption
 import com.nishadmathur.errors.MalformedDeclaration
-import com.nishadmathur.instructions.InstructionFactory
-import com.nishadmathur.instructions.MetaInstructionFactory
-import com.nishadmathur.instructions.TypeOverloadedInstructionFactory
-import com.nishadmathur.instructions.TypedInstructionFactory
+import com.nishadmathur.instructions.*
 import com.nishadmathur.instructions.format.InstructionFormat
 import com.nishadmathur.references.*
 import com.nishadmathur.util.decode
@@ -192,8 +189,9 @@ fun parseInstructions(
         val kind = map["kind"] as? String ?: "instruction"
 
         val instruction = when (kind) {
-            "meta" -> TypeOverloadedInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
-            "instruction" -> TypedInstructionFactory.parse(map, referenceFactories, instructionFormats, configuration)
+            "meta" -> TypeOverloadedInstructionFactory.parse(map, referenceFactories, instructionFormats, instructions, configuration)
+            "instruction" -> TypedInstructionFactory.parse(map, referenceFactories, instructionFormats, instructions, configuration)
+            "macro" -> MacroInstructionFactory.parse(map, referenceFactories, instructionFormats, instructions, configuration)
             else -> throw InvalidOption("kind", kind.toString())
         }
 

@@ -51,6 +51,7 @@ class LabelReferenceFactory(override val type: String,
             val addressingMode: AddressingModes = when ((properties["addressing mode"] ?: "global") as? String) {
                 "global" -> AddressingModes.global
                 "pc" -> AddressingModes.pc_relative
+                "segment" -> AddressingModes.segment_relative
                 else -> throw InvalidOption("addressing mode", properties)
             }
 
@@ -67,5 +68,5 @@ class LabelReferenceFactory(override val type: String,
 }
 
 enum class AddressingModes {
-    global, pc_relative
+    global, pc_relative, segment_relative
 }

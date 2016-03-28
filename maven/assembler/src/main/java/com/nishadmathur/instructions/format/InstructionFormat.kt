@@ -8,6 +8,7 @@ import com.nishadmathur.util.SizedByteArray
 import com.nishadmathur.util.toByteArray
 import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
+import java.lang.Math.min
 import java.util.*
 
 /**
@@ -33,9 +34,9 @@ public class InstructionFormat(val typedSegments: List<TypedLiteral>) {
                     } ?: throw PathResolutionError(it.path)
 
                     if (it.size != null) {
-                        Pair(it, SizedByteArray(segment.byteArray, it.size))
+                        Pair(it, segment.range(it.drop, min(it.drop + it.size, segment.bitSize)))
                     } else {
-                        Pair(it, segment)
+                        Pair(it, segment.range(it.drop))
                     }
                 }
                 is TypedLiteral.expression -> throw InternalError("Somehow an expression got here.")

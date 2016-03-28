@@ -1,5 +1,6 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.util.OffsetAssignable
 import com.nishadmathur.util.SizedByteArray
@@ -14,6 +15,8 @@ class IndexedReference(
     val offsetReference: Reference,
     val sourceBeforeOffset: Boolean
 ) : Reference {
+
+    override var segment: Segment? = null
 
     override var offset: SizedByteArray? = null
         set(offset) {

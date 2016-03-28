@@ -58,14 +58,21 @@ class TypeOverloadedInstructionFactory(
             throw AbstractInstructionInstantiationError(
                 factories.map { it.help }.joinToString(
                     separator = "\n\t",
-                    prefix = "The polymorphic instruction $identifier should match the form of one of following:\n\t",
+                    prefix = "The overloaded instruction $identifier should match the form of one of following:\n\t",
                     postfix = "\n\tNot $identifier <${arguments.joinToString("> <")}>\n")
             )
         }
     }
 
     companion object : InstructionParser {
-        override fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, instructionFormats: Map<String, InstructionFormat>, configuration: Configuration): InstructionFactory {
+        override fun parse(
+            properties: Map<*, *>,
+            referenceFactories: Map<String, ReferenceFactory>,
+            instructionFormats: Map<String, InstructionFormat>,
+            rootInstructionFactory: InstructionFactory,
+            configuration: Configuration
+        ): InstructionFactory {
+
             val name = properties["name"] as? String
                 ?: throw InvalidOption("name", properties)
 
@@ -74,7 +81,7 @@ class TypeOverloadedInstructionFactory(
                 ?.requireNoNulls()
                 ?: throw InvalidOption("instructions", properties)
 
-            val instructionFactories = instructions.map { TypedInstructionFactory.parse(it, referenceFactories, instructionFormats, configuration) }
+            val instructionFactories = instructions.map { TypedInstructionFactory.parse(it, referenceFactories, instructionFormats, rootInstructionFactory, configuration) }
 
             return TypeOverloadedInstructionFactory(name, instructionFactories)
         }

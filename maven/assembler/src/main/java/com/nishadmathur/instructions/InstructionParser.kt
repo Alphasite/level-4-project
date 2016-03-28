@@ -10,5 +10,11 @@ import com.nishadmathur.references.ReferenceFactory
  * Time: 18:31
  */
 interface InstructionParser {
-    fun parse(properties: Map<*, *>, referenceFactories: Map<String, ReferenceFactory>, instructionFormats: Map<String, InstructionFormat>, configuration: Configuration): InstructionFactory
+    fun parse(
+        properties: Map<*, *>,
+        referenceFactories: Map<String, ReferenceFactory>,
+        instructionFormats: Map<String, InstructionFormat>,
+        rootInstructionFactory: InstructionFactory,
+        configuration: Configuration
+    ): InstructionFactory
 }

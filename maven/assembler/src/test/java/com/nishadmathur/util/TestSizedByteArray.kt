@@ -13,29 +13,27 @@ class SizesByteArrayTest {
         assert(array.bitSize == 0)
     }
 
-//    @Test
-//    fun testRange() {
-//        throw UnsupportedOperationException()
-//    }
+    @Test
+    fun testRange() {
+        // There are some bugs which need to ber evolved but it isn't currently exposed ot the user, so that's okay.
+        val array = SizedByteArray(0x10.toByteArray(), 8)
+        val subset = array.range(2, 6)
 
-//    @Test
+        assert(subset.byteArray[0] == 0x4.toByte()) { "${subset.byteArray[0]} != ${0x4.toByte()}" }
+    }
+
+    @Test
     fun testJoin() {
-        val array1 = SizedByteArray(1.toByteArray(), 4)
-        val array2 = SizedByteArray(1.toByteArray(), 2)
-        val array3 = SizedByteArray(1.toByteArray(), 1)
-        val array4 = SizedByteArray(1.toByteArray(), 2)
+        val array1 = SizedByteArray(1.toByteArray(), 4) // 0001
+        val array2 = SizedByteArray(1.toByteArray(), 2) // 01
+        val array3 = SizedByteArray(1.toByteArray(), 1) // 1
+        val array4 = SizedByteArray(1.toByteArray(), 2) // 01
 
+        // 0 0010 1101
         val out = SizedByteArray.join(array1, array2, array3, array4)
 
-        println(out)
-
-
-
         assert(out.bitSize == 9)
-        assert(out.byteArray.equals(byteArrayOf(0, 45))) {"${out.byteArray} is not ${byteArrayOf(0, 45)}"}
-        assert(out.byteArray[0] == 0.toByte()) {"${out.byteArray[0]} was not 0"}
-        assert(out.byteArray[1] == 45.toByte()) {"${out.byteArray[1]} was not 45"}
-
-        throw UnsupportedOperationException()
+        assert(out.byteArray[0] == 0.toByte()) {"${out.byteArray[0]} byte[0] was not 0"}
+        assert(out.byteArray[1] == 45.toByte()) {"${out.byteArray[1]} byte[1] was not 45"}
     }
 }

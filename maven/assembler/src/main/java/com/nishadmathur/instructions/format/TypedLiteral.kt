@@ -15,7 +15,7 @@ sealed class TypedLiteral(val name: String?, val default: SizedByteArray?) {
 
     class literal(name: String?, val literal: SizedByteArray) : TypedLiteral(name, null)
 
-    class path(name: String?, val path: String, val size: Int? = null, default: SizedByteArray? = null) : TypedLiteral(name, default)
+    class path(name: String?, val path: String, val size: Int? = null, val drop: Int = 0, default: SizedByteArray? = null) : TypedLiteral(name, default)
 
     class expression(name: String?, val expression: String, val size: Int, default: SizedByteArray? = null) : TypedLiteral(name, default)
 
@@ -26,6 +26,7 @@ sealed class TypedLiteral(val name: String?, val default: SizedByteArray?) {
                 val path = untypedLiteral["path"] as? String
                     ?: throw InvalidOption("path", untypedLiteral)
                 val size = (untypedLiteral["size"] as? Number)?.toInt()
+                val drop = (untypedLiteral["drop"] as? Number)?.toInt() ?: 0
 
                 val defaultMap = (untypedLiteral["default"] as? Map<*, *>)?.ensureKeysAreStrings()
                 val default: SizedByteArray?
@@ -35,7 +36,7 @@ sealed class TypedLiteral(val name: String?, val default: SizedByteArray?) {
                     default = null
                 }
 
-                return TypedLiteral.path(name, path, size, default)
+                return TypedLiteral.path(name, path, size, drop, default)
             } else {
                 val name = untypedLiteral["name"] as? String?
                 val literal = parseLiteral(untypedLiteral)

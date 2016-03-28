@@ -1,8 +1,10 @@
 package com.nishadmathur.references
 
 import com.nishadmathur.assembler.IdentifierTable
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.errors.UndeclaredLabelError
+import com.nishadmathur.util.SegmentAssignable
 import com.nishadmathur.util.SizedByteArray
 import java.math.BigInteger
 
@@ -16,7 +18,9 @@ class LabelReference(
     val labelTable: IdentifierTable,
     val addressingMode: AddressingModes,
     override val size: Int
-) : Reference {
+) : Reference, SegmentAssignable {
+
+    override var segment: Segment? = null
 
     override var offset: SizedByteArray? = null
         set(offset) {
@@ -47,6 +51,10 @@ class LabelReference(
                 AddressingModes.global -> globalOffset
                 AddressingModes.pc_relative -> SizedByteArray(
                     globalOffset.bigInteger.subtract(offset?.bigInteger ?: BigInteger.ZERO).toByteArray(),
+                    globalOffset.bitSize
+                )
+                AddressingModes.segment_relative -> SizedByteArray(
+                    globalOffset.bigInteger.subtract(BigInteger.valueOf(segment?.offset ?: 0)).toByteArray(),
                     globalOffset.bitSize
                 )
             }

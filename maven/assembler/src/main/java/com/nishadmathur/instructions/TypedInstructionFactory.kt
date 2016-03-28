@@ -76,6 +76,7 @@ class TypedInstructionFactory(
             properties: Map<*, *>,
             referenceFactories: Map<String, ReferenceFactory>,
             instructionFormats: Map<String, InstructionFormat>,
+            rootInstructionFactory: InstructionFactory,
             configuration: Configuration
         ): InstructionFactory {
             

@@ -1098,3 +1098,14 @@ instructions:
             size: 8
           - path: b
             size: 8
+
+  - name: blt
+    kind: macro
+    arguments:
+      lhs: register
+      rhs: register
+      destination: literal
+    template: |
+      slt $1, $lhs, $rhs
+      bne $1, $0, $destination
+

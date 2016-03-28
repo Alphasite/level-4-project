@@ -11,26 +11,6 @@ import java.math.BigInteger
 class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boolean = false) {
     val byteArray: ByteArray
 
-    val bigInteger: BigInteger
-        get() = BigInteger(byteArray)
-
-    val long: Long
-        get() = this.bigInteger.toLong()
-
-    val hex: String
-        get() {
-            val hexString = BigInteger(1, byteArray).toString(16)
-            return hexString.padStart((Math.ceil(hexString.length / 4.0) * 4).toInt(), '0')
-        }
-
-    val bytes: String
-        get() {
-            return byteArray.withIndex()
-                .dropWhile { it.index < (byteArray.size - Math.ceil(bitSize / 8.0).toInt()) }
-                .map { Integer.toBinaryString(it.value.toInt()).padStart(8, '0') }
-                .joinToString(", ")
-        }
-
     init {
         val bytesToAdd = (bitSize / 8) - byteArray.size
         val byteStream = ByteArrayOutputStream()
@@ -50,6 +30,30 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
         assert(byteArray.size >= Math.ceil(bitSize / 8.0).toInt()) { "The array was not sized correctly!" }
     }
 
+    val bigInteger: BigInteger
+        get() = BigInteger(byteArray)
+
+    val long: Long
+        get() = this.bigInteger.toLong()
+
+    val hex: String
+        get() {
+            val hexString = BigInteger(1, byteArray).toString(16)
+            return hexString.padStart((Math.ceil(hexString.length / 4.0) * 4).toInt(), '0')
+        }
+
+    val bytes: String
+        get() {
+            if (bitSize != 0) {
+                return byteArray.withIndex()
+                    .dropWhile { it.index < (byteArray.size - Math.ceil(bitSize / 8.0).toInt()) }
+                    .map { Integer.toBinaryString(it.value.toInt()).padStart(8, '0') }
+                    .joinToString(", ")
+            } else {
+                return ""
+            }
+        }
+
     constructor(size: Int) : this (
         ByteArray(Math.ceil(size / 8.0).toInt()),
         size,
@@ -63,18 +67,22 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
     )
 
     fun rightAlign(): SizedByteArray {
-        return SizedByteArray.join(this, SizedByteArray(ByteArray(1), 4))
+        return SizedByteArray.join(this, SizedByteArray(ByteArray(1), bitSize % 8))
     }
 
     fun range(min: Int = 0, max: Int = bitSize): SizedByteArray {
 
-        val binaryString = byteArray
+        var binaryString = byteArray
                 .map { it.toInt() }
-                .map { Integer.toBinaryString(it) }
-                .map { it.substring(21, 32) }
+                .map { Integer.toBinaryString(it).padStart(32, '0').drop(24) }
+                .map { it.padStart(8, '0') }
                 .joinToString("")
-                .substring(min, max)
-                .padStart(Math.ceil((max - min) / 8.0).toInt() * 8)
+
+            binaryString = binaryString
+                .drop(binaryString.length - bitSize)
+                .drop(min)
+                .take(max - min)
+                .padStart(Math.ceil((max - min) / 8.0).toInt() * 8, '0')
 
         val byteArray = binaryString.splitEqually(8)
             .map { Integer.parseInt(it, 2) }
@@ -134,7 +142,7 @@ class SizedByteArray(byteArray: ByteArray, val bitSize: Int, val isNegative: Boo
                     .map { it.substring(it.length - 8, it.length) }
                     .joinToString("")
                     .substring(it.byteArray.size * 8 - it.bitSize)
-            }.joinToString("").padStart(Math.ceil(totalSize / 8.0).toInt() * 8)
+            }.joinToString("").padStart(Math.ceil(totalSize / 8.0).toInt() * 8, padChar = '0')
 
             val byteArray = binaryString.splitEqually(8)
                 .map { Integer.parseInt(it, 2) }

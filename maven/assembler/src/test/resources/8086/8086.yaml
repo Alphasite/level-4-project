@@ -1,0 +1,131 @@
+segments:
+  - name: code
+    offset: 0x1111
+    regex: "SECTION \\.text"
+  - name: data
+    offset: 0x3333
+    regex: "SECTION \\.data"
+  - name: stack
+    offset: 0x2526
+    regex: ""
+
+configuration:
+  line can start with label: true
+  label bit size: 16
+  word size: 32
+  label regex: "^(\\w+):"
+  argument separator: ",\\s*"
+  comment regex: "#.*"
+
+references:
+  - name: label
+    kind: label
+    size: 16
+    validation regex: "^\\w+$"
+    extraction regex: "\\w+"
+  - name: displacement label
+    kind: label
+    size: 16
+    validation regex: "^\\[\\w+$\]"
+    extraction regex: "\\w+"
+    addressing mode: segment
+  - name: segment
+    kind: mapped
+    size: 8
+    mappings:
+      "CS": 0x2EH
+      "DS": 0x23EH
+      "ES": 0x26H
+      "SS": 0x36H
+  - name: override register
+    kind: indexed
+    source before offset: true
+    regex: "(.*?):*"
+    valid left hand types:
+      - segment
+    valid right hand types:
+      - indirect register
+  - name: override label
+    kind: indexed
+    source before offset: true
+    regex: "(.*?):*"
+    valid left hand types:
+      - segment
+    valid right hand types:
+      - displacement label
+  - name: based index
+    kind: indexed
+    source before offset: true
+    regex: "\\[(.*?)\\]:\\[.*\\]"
+    valid left hand types:
+      - register
+    valid right hand types:
+      - register
+  - name: based index displacement
+    kind: indexed
+    source before offset: true
+    regex: "disp(\\[.*?\\]:\\[.*\\])"
+    valid left hand types:
+      - register
+    valid right hand types:
+      - based displacement
+  - name: indirect register
+    kind: mapped
+    size: 3
+    mappings:
+      \[bx]: 0x1
+      \[bp]: 0x2
+      # etc...
+  - name: register
+    kind: mapped
+    size: 3
+    mappings:
+      bx: 0x1
+      bp: 0x2
+      # etc...
+
+
+
+instructions:
+  - name: add
+    kind: meta
+    instructions:
+     - name: add displacement
+       arguments:
+         lhs: register
+         rhs: label displacement
+       byte sequence:
+         - literal: 0x0
+           size: 6
+         - literal: 0x0
+           size: 1
+         - literal: 0x1
+           size: 1
+         - literal: 0x1
+           size: 2
+         - path: lhs
+         - literal: 0x1
+           size: 3
+         - path: rhs
+           size: 8
+         - path: rhs
+           size: 8
+           drop: 8
+     - name: add indirect
+       arguments:
+         lhs: register
+         rhs: indirect register
+       byte sequence:
+         - literal: 0x0
+           size: 6
+         - literal: 0x0
+           size: 1
+         - literal: 0x1
+           size: 1
+         - literal: 0x1
+           size: 2
+         - path: lhs
+         - path: rhs
+
+
+# etc

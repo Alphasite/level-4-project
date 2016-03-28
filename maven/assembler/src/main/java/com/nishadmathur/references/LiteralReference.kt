@@ -1,5 +1,6 @@
 package com.nishadmathur.references
 
+import com.nishadmathur.directives.Segment
 import com.nishadmathur.errors.PathResolutionError
 import com.nishadmathur.util.SizedByteArray
 
@@ -9,8 +10,11 @@ import com.nishadmathur.util.SizedByteArray
  * Time: 20:48
  */
 class LiteralReference(override val raw: SizedByteArray) : Reference {
+
     override val size: Int
         get() = raw.bitSize
+
+    override var segment: Segment? = null
 
     override var offset: SizedByteArray? = null
 

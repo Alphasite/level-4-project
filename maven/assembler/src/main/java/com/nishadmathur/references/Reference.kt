@@ -2,6 +2,7 @@ package com.nishadmathur.references
 
 import com.nishadmathur.assembler.RawLiteralConvertible
 import com.nishadmathur.util.OffsetAssignable
+import com.nishadmathur.util.SegmentAssignable
 import com.nishadmathur.util.SizedByteArray
 
 /**
@@ -9,7 +10,7 @@ import com.nishadmathur.util.SizedByteArray
  * Date: 04/10/2015
  * Time: 20:48
  */
-interface Reference : RawLiteralConvertible, OffsetAssignable {
+interface Reference : RawLiteralConvertible, OffsetAssignable, SegmentAssignable {
 
     val size: Int
 

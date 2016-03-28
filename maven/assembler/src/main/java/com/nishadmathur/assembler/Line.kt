@@ -6,6 +6,8 @@ import com.nishadmathur.errors.AmbiguousIdentifierMatch
 import com.nishadmathur.errors.LineParseError
 import com.nishadmathur.instructions.Instruction
 import com.nishadmathur.instructions.InstructionFactory
+import com.nishadmathur.util.OffsetAssignable
+import com.nishadmathur.util.SegmentAssignable
 import com.nishadmathur.util.SizedByteArray
 
 /**
@@ -13,14 +15,20 @@ import com.nishadmathur.util.SizedByteArray
  * Date: 12/10/2015
  * Time: 11:29
  */
-class Line(val lineNumber: Int, val line: String) {
+class Line(val lineNumber: Int, val line: String): SegmentAssignable, OffsetAssignable {
 
     var comment: String? = null
     var label: Label? = null
     var instruction: Instruction? = null
-    var segment: Segment? = null
 
-    var offset: SizedByteArray? = null
+    override var segment: Segment? = null
+        set(segment) {
+            field = segment
+            this.instruction?.segment = field
+            this.label?.segment = field
+        }
+
+    override var offset: SizedByteArray? = null
         set(offset) {
             field = offset
             this.instruction?.offset = offset
@@ -81,6 +89,8 @@ class Line(val lineNumber: Int, val line: String) {
 
             this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)
         }
+
+        this.segment = segment // Force set segment on children.
     }
 
     override fun toString(): String {
