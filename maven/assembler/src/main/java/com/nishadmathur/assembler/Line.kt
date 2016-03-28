@@ -48,7 +48,7 @@ class Line(val lineNumber: Int, val line: String): SegmentAssignable, OffsetAssi
         }
 
         comment = configuration.commentRegex.find(line)?.value
-        var body = configuration.commentRegex.replace(line, "").trim()
+        var body = configuration.commentRegex.replace(line, "")
 
         val potentialSegments = configuration.segments.filter { it.value.matcher.containsMatchIn(line) }
 
@@ -65,9 +65,9 @@ class Line(val lineNumber: Int, val line: String): SegmentAssignable, OffsetAssi
         }
 
         val label = configuration.labelRegex.find(body)?.groups?.get(1)?.value
-        body = configuration.labelRegex.replace(body, "")
+        body = configuration.labelRegex.replace(body, "").trim()
 
-        val arguments = body.split(configuration.labelRegex).filter { it.length > 0 }
+        val arguments = body.split(Regex("\\s+"), limit = 2).filter { it.length > 0 }
 
         if (label == null && arguments.size == 0 && comment == null && segment == null) {
             throw LineParseError("Line isn't formatted correctly; $line")
@@ -82,10 +82,14 @@ class Line(val lineNumber: Int, val line: String): SegmentAssignable, OffsetAssi
 
             val name = instructionSection.substringBefore(" ")
 
-            val instructionSegments = instructionSection.replace("$name", "").trim()
-                .split(configuration.argumentSeparator)
-                .map { it.trim() }
-                .filter { it.length > 0 }
+            val instructionSegments: List<String> = if (arguments.size > 1) {
+                arguments[1].trim()
+                    .split(configuration.argumentSeparator)
+                    .map { it.trim() }
+                    .filter { it.length > 0 }
+            } else {
+                listOf()
+            }
 
             this.instruction = instructionFactory.getInstanceIfIsMatch(name, instructionSegments)
         }
